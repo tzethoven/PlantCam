@@ -31,14 +31,24 @@ jobs:
       - name: Build application
         run: npm run build
 
-    #   - name: Commit and push build
-    #     run: |
-    #       git config --global user.name 'GitHub Actions'
-    #       git config --global user.email 'github-actions@github.com'
+      - name: Prepare production dependencies
+        run: |
+          # Remove dev dependencies and install only production deps
+          rm -rf node_modules
+          npm ci --omit=dev
+          # Create a production package.json without dev dependencies
+          node -e "const pkg=require('./package.json'); delete pkg.devDependencies; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2))"
+          # Remove unnecessary files
+          rm -rf .git* .prettier* .eslint* tests/ src/
 
-    #       # Add and commit the build directory
-    #       git add build -f
-    #       git commit -m "chore: update build [skip ci]" || echo "No changes to commit"
+      - name: Create deployment archive
+        run: |
+          tar czf deployment.tar.gz build/ node_modules/ package.json package-lock.json start.sh
+          echo "Created deployment archive with only necessary files"
 
-    #       # Push changes
-    #       git push origin main
+      - name: Upload deployment artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-build
+          path: deployment.tar.gz
+          retention-days: 5
