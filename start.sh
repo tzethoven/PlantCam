@@ -16,7 +16,7 @@ fi
 
 # Check if build directory exists
 if [ ! -d "build" ]; then
-    echo "Error: build directory not found. Please run 'npm run build:pi' on your development machine first."
+    echo "Error: build directory not found. Please run 'npm run build' on your development machine first."
     exit 1
 fi
 
