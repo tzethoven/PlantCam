@@ -31,14 +31,14 @@ jobs:
       - name: Build application
         run: npm run build:pi
 
-      - name: Commit and push build
-        run: |
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email 'github-actions@github.com'
+    #   - name: Commit and push build
+    #     run: |
+    #       git config --global user.name 'GitHub Actions'
+    #       git config --global user.email 'github-actions@github.com'
 
-          # Add and commit the build directory
-          git add build -f
-          git commit -m "chore: update build [skip ci]" || echo "No changes to commit"
+    #       # Add and commit the build directory
+    #       git add build -f
+    #       git commit -m "chore: update build [skip ci]" || echo "No changes to commit"
 
-          # Push changes
-          git push origin main
+    #       # Push changes
+    #       git push origin main
