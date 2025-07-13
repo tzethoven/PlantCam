@@ -6,6 +6,7 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
+		"build:pi": "NODE_OPTIONS='--target=linux-arm64' vite build",
 		"preview": "vite preview",
 		"start": "node build",
 		"prepare": "svelte-kit sync || echo ''",
