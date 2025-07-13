@@ -7,8 +7,7 @@ node_modules
 .netlify
 .wrangler
 /.svelte-kit
-# We want to commit the build directory for Raspberry Pi deployment
-# /build
+/build
 
 # OS
 .DS_Store
