@@ -6,22 +6,21 @@
 
 	onMount(() => {
 		// Initialize WebSocket connection for camera stream
-		websocket = new WebSocket(`ws://${window.location.host}/api/camera/stream`);
-
-		websocket.onmessage = async (event) => {
-			// Handle incoming video stream data
-			const blob = new Blob([event.data], { type: 'image/jpeg' });
-			const imageUrl = URL.createObjectURL(blob);
-			if (videoElement) {
-				videoElement.src = imageUrl;
-			}
-		};
+		// websocket = new WebSocket(`wss://${window.location.host}/api/camera/stream`);
+		// websocket.onmessage = async (event) => {
+		// 	// Handle incoming video stream data
+		// 	const blob = new Blob([event.data], { type: 'image/jpeg' });
+		// 	const imageUrl = URL.createObjectURL(blob);
+		// 	if (videoElement) {
+		// 		videoElement.src = imageUrl;
+		// 	}
+		// };
 	});
 
 	onDestroy(() => {
-		if (websocket) {
-			websocket.close();
-		}
+		// if (websocket) {
+		// 	websocket.close();
+		// }
 	});
 </script>
 

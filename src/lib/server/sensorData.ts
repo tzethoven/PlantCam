@@ -6,6 +6,8 @@ const readings: SensorReading[] = [];
 
 function pollSensor() {
 	const result = dht.read(11, 4); // DHT11 on GPIO4
+	console.log('dht.read', { result });
+
 	const reading = {
 		timestamp: Date.now(),
 		temperature: result.temperature,
