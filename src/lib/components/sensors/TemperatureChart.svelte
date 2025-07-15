@@ -10,6 +10,22 @@
 	async function fetchData() {
 		const res = await fetch('/api/sensors/data');
 		data = await res.json();
+		updateChart();
+	}
+
+	function updateChart() {
+		if (chart && data.length) {
+			chart.data.labels = data.map((d) =>
+				new Date(d.timestamp).toLocaleTimeString([], {
+					hour: '2-digit',
+					minute: '2-digit',
+					hourCycle: 'h23'
+				})
+			);
+			chart.data.datasets[0].data = data.map((d) => d.temperature);
+			chart.data.datasets[1].data = data.map((d) => d.humidity);
+			chart.update();
+		}
 	}
 
 	onMount(() => {
@@ -19,11 +35,11 @@
 		chart = new Chart(canvas, {
 			type: 'line',
 			data: {
-				labels: data.map((r) => new Date(r.timestamp).toLocaleTimeString()),
+				labels: [],
 				datasets: [
 					{
 						label: 'Temperature (°C)',
-						data: data.map((r) => r.temperature),
+						data: [],
 						borderColor: 'red',
 						backgroundColor: 'rgba(255,0,0,0.1)',
 						fill: false,
@@ -32,7 +48,7 @@
 					},
 					{
 						label: 'Air Humidity (%)',
-						data: data.map((r) => r.humidity),
+						data: [],
 						borderColor: 'blue',
 						backgroundColor: 'rgba(0,0,255,0.1)',
 						fill: false,

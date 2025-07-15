@@ -1,12 +1,15 @@
 import dht from 'node-dht-sensor';
 
+if (process.env.NODE_ENV === 'development') {
+	dht.initialize({ test: { fake: { temperature: 20, humidity: 40 } } });
+}
+
 export type SensorReading = { timestamp: number; temperature: number; humidity: number };
 const windowSize = 100;
 const readings: SensorReading[] = [];
 
 function pollSensor() {
 	const result = dht.read(11, 4); // DHT11 on GPIO4
-	console.log('dht.read', { result });
 
 	const reading = {
 		timestamp: Date.now(),
@@ -18,7 +21,7 @@ function pollSensor() {
 }
 
 // Start polling every 30 seconds
-setInterval(pollSensor, 30_000);
+setInterval(pollSensor, 60_000);
 pollSensor(); // Initial read
 
 export function getReadings() {
