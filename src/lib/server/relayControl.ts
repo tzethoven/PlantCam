@@ -9,8 +9,13 @@ let isWateringActive = false;
 // Initialize GPIO
 function initializeRelay() {
 	try {
-		if (process.env.NODE_ENV === 'development') {
-			console.log('Development mode: GPIO relay control simulated');
+		// Don't initialize GPIO during build process or development
+		if (
+			process.env.NODE_ENV === 'development' ||
+			process.env.BUILDING ||
+			typeof window !== 'undefined'
+		) {
+			console.log('Build/Development mode: GPIO relay control simulated');
 			return;
 		}
 
@@ -87,8 +92,10 @@ export function cleanupRelay() {
 	}
 }
 
-// Initialize on module load
-initializeRelay();
+// Initialize on module load (only in production runtime)
+if (process.env.NODE_ENV === 'production' && !process.env.BUILDING) {
+	initializeRelay();
+}
 
 // Cleanup on process exit
 process.on('SIGINT', cleanupRelay);
