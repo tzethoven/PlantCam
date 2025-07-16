@@ -15,7 +15,9 @@ function initializeRelay() {
 			process.env.BUILDING ||
 			typeof window !== 'undefined'
 		) {
-			console.log('Build/Development mode: GPIO relay control simulated');
+			console.log(
+				`Build/Development mode: GPIO relay control simulated (BUILDING=${process.env.BUILDING}, NODE_ENV=${process.env.NODE_ENV})`
+			);
 			return;
 		}
 
