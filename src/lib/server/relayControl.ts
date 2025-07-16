@@ -1,7 +1,7 @@
 import { Gpio } from 'onoff';
 
 // GPIO pin for relay control (BCM numbering)
-const RELAY_PIN = 18; // GPIO 18 (Physical pin 12)
+const RELAY_PIN = 530; // GPIO 18 (Physical pin gpi-530)
 
 let relayGpio: Gpio | null = null;
 let isWateringActive = false;
