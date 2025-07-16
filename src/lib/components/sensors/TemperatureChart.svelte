@@ -71,7 +71,8 @@
 							display: true,
 							text: 'Temperature (°C)'
 						},
-						beginAtZero: true
+						min: 10,
+						max: 30
 					},
 					y1: {
 						type: 'linear',
@@ -81,7 +82,8 @@
 							display: true,
 							text: 'Air Humidity (%)'
 						},
-						beginAtZero: true,
+						min: 40,
+						max: 80,
 						grid: {
 							drawOnChartArea: false
 						}

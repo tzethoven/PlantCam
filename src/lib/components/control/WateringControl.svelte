@@ -1,10 +1,24 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+
 	let isWatering = false;
 	let schedule = {
 		enabled: false,
 		frequency: 24, // hours
 		duration: 30 // seconds
 	};
+
+	async function fetchWateringStatus() {
+		try {
+			const response = await fetch('/api/water/status');
+			if (response.ok) {
+				const data = await response.json();
+				isWatering = data.isWatering;
+			}
+		} catch (error) {
+			console.error('Failed to fetch watering status:', error);
+		}
+	}
 
 	async function toggleWatering() {
 		try {
@@ -17,12 +31,20 @@
 			});
 
 			if (response.ok) {
-				isWatering = !isWatering;
+				const data = await response.json();
+				isWatering = data.state;
 			}
 		} catch (error) {
 			console.error('Failed to toggle watering:', error);
 		}
 	}
+
+	onMount(() => {
+		fetchWateringStatus();
+		// Check status every 5 seconds to stay in sync
+		const interval = setInterval(fetchWateringStatus, 5000);
+		return () => clearInterval(interval);
+	});
 </script>
 
 <div class="space-y-6">

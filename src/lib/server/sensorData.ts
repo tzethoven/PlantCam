@@ -5,7 +5,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 export type SensorReading = { timestamp: number; temperature: number; humidity: number };
-const windowSize = 100;
+const windowSize = 200;
 const readings: SensorReading[] = [];
 
 function pollSensor() {
@@ -20,8 +20,8 @@ function pollSensor() {
 	if (readings.length > windowSize) readings.shift();
 }
 
-// Start polling every 30 seconds
-setInterval(pollSensor, 60_000);
+// Start polling every 5 minutes
+setInterval(pollSensor, 300_000);
 pollSensor(); // Initial read
 
 export function getReadings() {

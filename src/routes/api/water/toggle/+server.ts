@@ -1,18 +1,35 @@
 import type { RequestHandler } from '@sveltejs/kit';
+import { startWatering, stopWatering, getWateringStatus } from '$lib/server/relayControl';
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {
 		const { state } = await request.json();
+		let success = false;
+		let actualState = getWateringStatus();
 
-		// Mock response - we'll implement actual GPIO control on the Raspberry Pi later
+		if (state && !actualState) {
+			// Start watering
+			success = startWatering();
+			actualState = success;
+		} else if (!state && actualState) {
+			// Stop watering
+			success = stopWatering();
+			actualState = !success;
+		} else {
+			// No change needed
+			success = true;
+		}
+
 		return new Response(
 			JSON.stringify({
-				success: true,
-				state: state,
-				message: 'Watering control simulated (GPIO control will be implemented on Raspberry Pi)'
+				success,
+				state: actualState,
+				message: success
+					? `Watering ${actualState ? 'started' : 'stopped'}`
+					: 'Failed to control watering'
 			}),
 			{
-				status: 200,
+				status: success ? 200 : 500,
 				headers: {
 					'Content-Type': 'application/json'
 				}
