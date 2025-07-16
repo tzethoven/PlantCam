@@ -15,8 +15,8 @@ function initializeRelay() {
 		}
 
 		relayGpio = new Gpio(RELAY_PIN, 'out');
-		// Start with relay OFF (HIGH for most relay modules)
-		relayGpio.writeSync(1);
+		// Start with relay OFF
+		relayGpio.writeSync(0);
 		console.log(`Relay initialized on GPIO ${RELAY_PIN}`);
 	} catch (error) {
 		console.error('Failed to initialize relay GPIO:', error);
@@ -37,8 +37,8 @@ export function startWatering(): boolean {
 		}
 
 		if (relayGpio) {
-			// Turn relay ON (LOW signal for most relay modules)
-			relayGpio.writeSync(0);
+			// Turn relay ON
+			relayGpio.writeSync(1);
 			isWateringActive = true;
 			console.log('Watering started - Relay ON');
 			return true;
@@ -60,8 +60,8 @@ export function stopWatering(): boolean {
 		}
 
 		if (relayGpio) {
-			// Turn relay OFF (HIGH signal for most relay modules)
-			relayGpio.writeSync(1);
+			// Turn relay OFF
+			relayGpio.writeSync(0);
 			isWateringActive = false;
 			console.log('Watering stopped - Relay OFF');
 			return true;
@@ -81,7 +81,7 @@ export function getWateringStatus(): boolean {
 // Cleanup GPIO on process exit
 export function cleanupRelay() {
 	if (relayGpio) {
-		relayGpio.writeSync(1); // Ensure relay is OFF
+		relayGpio.writeSync(0); // Ensure relay is OFF
 		relayGpio.unexport();
 		console.log('Relay GPIO cleaned up');
 	}
