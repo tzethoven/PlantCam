@@ -55,7 +55,7 @@
 			class="w-full rounded-lg px-6 py-4 text-lg font-medium text-white transition-colors {isWatering
 				? 'bg-blue-600 hover:bg-blue-700'
 				: 'bg-green-600 hover:bg-green-700'}"
-			on:click={toggleWatering}
+			on:mousedown={toggleWatering}
 		>
 			{isWatering ? 'Stop Watering' : 'Start Watering'}
 		</button>
