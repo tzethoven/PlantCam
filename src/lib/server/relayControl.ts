@@ -1,9 +1,11 @@
-import { Gpio } from 'onoff';
+import { Chip, Line, getChipNames } from 'node-libgpiod';
 
 // GPIO pin for relay control (BCM numbering)
-const RELAY_PIN = 530; // GPIO 18 (Physical pin gpi-530)
+const RELAY_PIN = 18; // GPIO 18 (BCM numbering)
+const GPIO_CHIP = 0; // Default GPIO chip on Raspberry Pi
 
-let relayGpio: Gpio | null = null;
+let relayLine: Line | null = null;
+let gpioChip: Chip | null = null;
 let isWateringActive = false;
 
 // Initialize GPIO
@@ -21,12 +23,32 @@ function initializeRelay() {
 			return;
 		}
 
-		relayGpio = new Gpio(RELAY_PIN, 'out');
-		// Start with relay OFF
-		relayGpio.writeSync(0);
+		const chipNames = getChipNames();
+		console.log({ chipNames });
+
+		// Open GPIO chip
+		gpioChip = new Chip(GPIO_CHIP);
+		console.log({ lineNames: gpioChip.lineNames });
+
+		// Get the GPIO line
+		relayLine = gpioChip.getLine(RELAY_PIN);
+
+		// Request the line as output with initial low state
+		relayLine.requestOutputMode();
+
+		// Start with relay OFF (low)
+		relayLine.setValue(0);
 		console.log(`Relay initialized on GPIO ${RELAY_PIN}`);
 	} catch (error) {
 		console.error('Failed to initialize relay GPIO:', error);
+		// Clean up on error
+		if (relayLine) {
+			relayLine.release();
+			relayLine = null;
+		}
+		if (gpioChip) {
+			gpioChip = null;
+		}
 	}
 }
 
@@ -39,13 +61,13 @@ export function startWatering(): boolean {
 			return true;
 		}
 
-		if (!relayGpio) {
+		if (!relayLine) {
 			initializeRelay();
 		}
 
-		if (relayGpio) {
-			// Turn relay ON
-			relayGpio.writeSync(1);
+		if (relayLine) {
+			// Turn relay ON (high)
+			relayLine.setValue(1);
 			isWateringActive = true;
 			console.log('Watering started - Relay ON');
 			return true;
@@ -66,9 +88,9 @@ export function stopWatering(): boolean {
 			return true;
 		}
 
-		if (relayGpio) {
-			// Turn relay OFF
-			relayGpio.writeSync(0);
+		if (relayLine) {
+			// Turn relay OFF (low)
+			relayLine.setValue(0);
 			isWateringActive = false;
 			console.log('Watering stopped - Relay OFF');
 			return true;
@@ -87,10 +109,20 @@ export function getWateringStatus(): boolean {
 
 // Cleanup GPIO on process exit
 export function cleanupRelay() {
-	if (relayGpio) {
-		relayGpio.writeSync(0); // Ensure relay is OFF
-		relayGpio.unexport();
+	try {
+		if (relayLine) {
+			// Ensure relay is OFF before cleanup
+			relayLine.setValue(0);
+			relayLine.release();
+			relayLine = null;
+		}
+		if (gpioChip) {
+			gpioChip = null;
+		}
+		isWateringActive = false;
 		console.log('Relay GPIO cleaned up');
+	} catch (error) {
+		console.error('Error during GPIO cleanup:', error);
 	}
 }
 
