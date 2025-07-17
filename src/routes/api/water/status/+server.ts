@@ -3,6 +3,21 @@ import { getWateringStatus } from '$lib/server/relayControl';
 
 export const GET: RequestHandler = async () => {
 	try {
+		if (process.env.NODE_ENV === 'development') {
+			return new Response(
+				JSON.stringify({
+					success: true,
+					isWatering: true
+				}),
+				{
+					status: 200,
+					headers: {
+						'Content-Type': 'application/json'
+					}
+				}
+			);
+		}
+
 		const isWatering = getWateringStatus();
 
 		return new Response(

@@ -20,9 +20,12 @@ function pollSensor() {
 	if (readings.length > windowSize) readings.shift();
 }
 
-// Start polling every 5 minutes
-setInterval(pollSensor, 300_000);
-pollSensor(); // Initial read
+// Only start polling if not building
+if (!process.env.BUILDING) {
+	// Start polling every 5 minutes
+	setInterval(pollSensor, 300_000);
+	pollSensor(); // Initial read
+}
 
 export function getReadings() {
 	return readings;

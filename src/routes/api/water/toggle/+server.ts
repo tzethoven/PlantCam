@@ -3,6 +3,21 @@ import { startWatering, stopWatering, getWateringStatus } from '$lib/server/rela
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {
+		if (process.env.NODE_ENV === 'development') {
+			return new Response(
+				JSON.stringify({
+					success: true,
+					state: true,
+					message: `Watering started`
+				}),
+				{
+					status: 200,
+					headers: {
+						'Content-Type': 'application/json'
+					}
+				}
+			);
+		}
 		const { state } = await request.json();
 		let success = false;
 		let actualState = getWateringStatus();

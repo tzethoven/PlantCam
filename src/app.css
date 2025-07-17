@@ -1,2 +1,480 @@
-@import 'tailwindcss';
-@plugin '@tailwindcss/forms';
+/* Import Inter font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS Custom Properties for Theme Variables */
+:root {
+	/* Nature-inspired color palette */
+	--color-nature-primary: #22c55e;
+	--color-nature-secondary: #16a34a;
+	--color-nature-accent: #15803d;
+	--color-sky-primary: #0ea5e9;
+	--color-sky-secondary: #0284c7;
+	--color-earth-primary: #f97316;
+	--color-earth-secondary: #ea580c;
+	--color-sun-primary: #f59e0b;
+	--color-sun-secondary: #d97706;
+
+	/* Background gradients */
+	--gradient-nature: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 25%, #e0f2fe 75%, #f0f9ff 100%);
+	--gradient-forest: linear-gradient(135deg, #166534 0%, #15803d 50%, #16a34a 100%);
+	--gradient-sky: linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #0369a1 100%);
+	--gradient-earth: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%);
+
+	/* Glassmorphism properties */
+	--glass-bg: rgba(255, 255, 255, 0.25);
+	--glass-bg-dark: rgba(255, 255, 255, 0.1);
+	--glass-border: rgba(255, 255, 255, 0.18);
+	--glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+	--glass-shadow-lg: 0 25px 50px -12px rgba(31, 38, 135, 0.25);
+
+	/* Animation settings */
+	--animation-duration-fast: 0.15s;
+	--animation-duration-normal: 0.3s;
+	--animation-duration-slow: 0.5s;
+	--animation-easing: cubic-bezier(0.4, 0, 0.2, 1);
+	--animation-easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+	/* Spacing system */
+	--spacing-xs: 0.25rem;
+	--spacing-sm: 0.5rem;
+	--spacing-md: 1rem;
+	--spacing-lg: 1.5rem;
+	--spacing-xl: 2rem;
+	--spacing-2xl: 3rem;
+
+	/* Border radius */
+	--radius-sm: 0.375rem;
+	--radius-md: 0.5rem;
+	--radius-lg: 0.75rem;
+	--radius-xl: 1rem;
+	--radius-2xl: 1.5rem;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+	:root {
+		--glass-bg: rgba(0, 0, 0, 0.25);
+		--glass-bg-dark: rgba(0, 0, 0, 0.4);
+		--glass-border: rgba(255, 255, 255, 0.1);
+	}
+}
+
+/* Base typography styles */
+html {
+	font-family:
+		'Inter',
+		system-ui,
+		-apple-system,
+		BlinkMacSystemFont,
+		'Segoe UI',
+		Roboto,
+		sans-serif;
+	font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+	font-variation-settings: normal;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+body {
+	background: var(--gradient-nature);
+	min-height: 100vh;
+	line-height: 1.6;
+	color: #1f2937;
+}
+
+/* Enhanced typography classes */
+.text-display {
+	font-size: 3.75rem;
+	line-height: 1;
+	font-weight: 800;
+	letter-spacing: -0.025em;
+}
+
+.text-heading-1 {
+	font-size: 2.25rem;
+	line-height: 2.5rem;
+	font-weight: 700;
+	letter-spacing: -0.025em;
+}
+
+.text-heading-2 {
+	font-size: 1.875rem;
+	line-height: 2.25rem;
+	font-weight: 600;
+	letter-spacing: -0.025em;
+}
+
+.text-heading-3 {
+	font-size: 1.5rem;
+	line-height: 2rem;
+	font-weight: 600;
+}
+
+.text-body-large {
+	font-size: 1.125rem;
+	line-height: 1.75rem;
+	font-weight: 400;
+}
+
+.text-body {
+	font-size: 1rem;
+	line-height: 1.5rem;
+	font-weight: 400;
+}
+
+.text-body-small {
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	font-weight: 400;
+}
+
+.text-caption {
+	font-size: 0.75rem;
+	line-height: 1rem;
+	font-weight: 500;
+	letter-spacing: 0.025em;
+	text-transform: uppercase;
+}
+
+/* Performance-optimized glassmorphism utility classes */
+.glass {
+	background: var(--glass-bg);
+	backdrop-filter: blur(16px);
+	-webkit-backdrop-filter: blur(16px);
+	border: 1px solid var(--glass-border);
+	box-shadow: var(--glass-shadow);
+	/* Performance optimizations */
+	transform: translateZ(0);
+	backface-visibility: hidden;
+}
+
+.glass-dark {
+	background: var(--glass-bg-dark);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
+	border: 1px solid var(--glass-border);
+	box-shadow: var(--glass-shadow-lg);
+	/* Performance optimizations */
+	transform: translateZ(0);
+	backface-visibility: hidden;
+}
+
+.glass-card {
+	background: var(--glass-bg);
+	backdrop-filter: blur(16px);
+	-webkit-backdrop-filter: blur(16px);
+	border: 1px solid var(--glass-border);
+	box-shadow: var(--glass-shadow);
+	border-radius: 0.75rem;
+	padding: 1.5rem;
+	transition:
+		transform var(--animation-duration-normal) var(--animation-easing),
+		box-shadow var(--animation-duration-normal) var(--animation-easing);
+	/* Performance optimizations */
+	will-change: transform, box-shadow;
+	transform: translateZ(0);
+	backface-visibility: hidden;
+}
+
+.glass-card:hover {
+	transform: translateY(-2px) translateZ(0);
+	box-shadow:
+		var(--glass-shadow-lg),
+		0 10px 25px -3px rgba(34, 197, 94, 0.1);
+}
+
+.glass-button {
+	background: var(--glass-bg);
+	backdrop-filter: blur(16px);
+	-webkit-backdrop-filter: blur(16px);
+	border: 1px solid var(--glass-border);
+	box-shadow: var(--glass-shadow);
+	border-radius: 0.5rem;
+	padding: 0.5rem 1rem;
+	font-weight: 500;
+	transition:
+		background-color var(--animation-duration-fast) var(--animation-easing),
+		transform var(--animation-duration-fast) var(--animation-easing);
+	/* Performance optimizations */
+	will-change: transform, background-color;
+	transform: translateZ(0);
+	backface-visibility: hidden;
+}
+
+.glass-button:hover {
+	background: rgba(255, 255, 255, 0.35);
+	transform: translateY(-1px) translateZ(0);
+}
+
+.glass-button:active {
+	transform: translateY(0) translateZ(0);
+}
+
+/* Performance-optimized animation utility classes */
+.animate-entrance {
+	animation: fadeInUp var(--animation-duration-slow) var(--animation-easing) forwards;
+	opacity: 0;
+	/* Performance optimizations */
+	will-change: transform, opacity;
+	transform: translateZ(0);
+	backface-visibility: hidden;
+}
+
+.animate-entrance-delay-1 {
+	animation-delay: 0.1s;
+}
+
+.animate-entrance-delay-2 {
+	animation-delay: 0.2s;
+}
+
+.animate-entrance-delay-3 {
+	animation-delay: 0.3s;
+}
+
+.animate-entrance-delay-4 {
+	animation-delay: 0.4s;
+}
+
+.animate-hover-lift {
+	transition: transform var(--animation-duration-normal) var(--animation-easing);
+	/* Performance optimizations */
+	will-change: transform;
+	transform: translateZ(0);
+	backface-visibility: hidden;
+}
+
+.animate-hover-lift:hover {
+	transform: translateY(-4px) translateZ(0);
+}
+
+.animate-hover-scale {
+	transition: transform var(--animation-duration-fast) var(--animation-easing);
+	/* Performance optimizations */
+	will-change: transform;
+	transform: translateZ(0);
+	backface-visibility: hidden;
+}
+
+.animate-hover-scale:hover {
+	transform: scale(1.05) translateZ(0);
+}
+
+.animate-hover-glow {
+	transition: box-shadow var(--animation-duration-normal) var(--animation-easing);
+	/* Performance optimizations */
+	will-change: box-shadow;
+}
+
+.animate-hover-glow:hover {
+	box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+}
+
+/* Gradient text utility */
+.text-gradient-nature {
+	background: var(--gradient-forest);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.text-gradient-sky {
+	background: var(--gradient-sky);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+.text-gradient-earth {
+	background: var(--gradient-earth);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+/* Performance-optimized loading skeleton utility */
+.skeleton {
+	background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+	background-size: 200% 100%;
+	animation: shimmer 2s infinite;
+	/* Performance optimizations */
+	will-change: background-position;
+	transform: translateZ(0);
+	backface-visibility: hidden;
+}
+
+@keyframes shimmer {
+	0% {
+		background-position: -200% 0;
+	}
+	100% {
+		background-position: 200% 0;
+	}
+}
+
+/* Intersection Observer utility classes for scroll-triggered animations */
+.animate-on-scroll {
+	opacity: 0;
+	transform: translateY(30px);
+	transition:
+		opacity 0.6s ease-out,
+		transform 0.6s ease-out;
+	/* Performance optimizations */
+	will-change: transform, opacity;
+	transform: translateY(30px) translateZ(0);
+	backface-visibility: hidden;
+}
+
+.animate-on-scroll.is-visible {
+	opacity: 1;
+	transform: translateY(0) translateZ(0);
+}
+
+.animate-on-scroll-fade {
+	opacity: 0;
+	transition: opacity 0.8s ease-out;
+	/* Performance optimizations */
+	will-change: opacity;
+}
+
+.animate-on-scroll-fade.is-visible {
+	opacity: 1;
+}
+
+.animate-on-scroll-slide-left {
+	opacity: 0;
+	transform: translateX(-50px);
+	transition:
+		opacity 0.6s ease-out,
+		transform 0.6s ease-out;
+	/* Performance optimizations */
+	will-change: transform, opacity;
+	transform: translateX(-50px) translateZ(0);
+	backface-visibility: hidden;
+}
+
+.animate-on-scroll-slide-left.is-visible {
+	opacity: 1;
+	transform: translateX(0) translateZ(0);
+}
+
+.animate-on-scroll-slide-right {
+	opacity: 0;
+	transform: translateX(50px);
+	transition:
+		opacity 0.6s ease-out,
+		transform 0.6s ease-out;
+	/* Performance optimizations */
+	will-change: transform, opacity;
+	transform: translateX(50px) translateZ(0);
+	backface-visibility: hidden;
+}
+
+.animate-on-scroll-slide-right.is-visible {
+	opacity: 1;
+	transform: translateX(0) translateZ(0);
+}
+
+@keyframes fadeInUp {
+	0% {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Comprehensive Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+	/* Global animation and transition overrides */
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+		transform: none !important;
+	}
+
+	/* Static alternatives for entrance animations */
+	.animate-entrance {
+		opacity: 1 !important;
+		animation: none !important;
+		transform: translateY(0) scale(1) !important;
+	}
+
+	/* Static alternatives for hover effects */
+	.animate-hover-lift:hover,
+	.animate-hover-scale:hover {
+		transform: none !important;
+	}
+
+	.animate-hover-glow:hover {
+		box-shadow: var(--glass-shadow) !important;
+	}
+
+	/* Disable shimmer animation */
+	.skeleton {
+		animation: none !important;
+		background: #f3f4f6 !important;
+	}
+
+	/* Static glassmorphism cards */
+	.glass-card:hover {
+		transform: none !important;
+		box-shadow: var(--glass-shadow) !important;
+	}
+
+	/* Ensure functionality remains intact */
+	button,
+	input,
+	select,
+	textarea {
+		transition:
+			background-color 0.01ms,
+			border-color 0.01ms,
+			color 0.01ms !important;
+	}
+
+	/* Maintain focus indicators for accessibility */
+	.focus-ring:focus {
+		outline: none !important;
+		box-shadow:
+			0 0 0 2px white,
+			0 0 0 4px #22c55e !important;
+		transition: none !important;
+	}
+}
+
+/* Focus styles for accessibility */
+.focus-ring {
+	outline: none;
+}
+
+.focus-ring:focus {
+	outline: none;
+	box-shadow:
+		0 0 0 2px white,
+		0 0 0 4px #22c55e;
+}
+
+/* Utility for smooth transitions */
+.transition-smooth {
+	transition: all var(--animation-duration-normal) var(--animation-easing);
+}
+
+.transition-fast {
+	transition: all var(--animation-duration-fast) var(--animation-easing);
+}
+
+.transition-slow {
+	transition: all var(--animation-duration-slow) var(--animation-easing);
+}
