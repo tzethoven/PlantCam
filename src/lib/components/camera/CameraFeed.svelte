@@ -879,7 +879,7 @@
 		.camera-controls {
 			bottom: 0.875rem;
 			gap: 0.75rem;
-			opacity: 0.8;
+			opacity: 0.9; /* More opaque for better visibility */
 			visibility: visible;
 		}
 
@@ -887,6 +887,14 @@
 			padding: 0.75rem;
 			min-width: 4rem;
 			min-height: 4rem;
+			background: rgba(255, 255, 255, 0.8); /* More opaque background */
+			border: 1px solid rgba(255, 255, 255, 0.35);
+			color: rgba(75, 85, 99, 0.9); /* Better contrast */
+		}
+
+		.control-button:hover {
+			background: rgba(255, 255, 255, 0.9);
+			border-color: rgba(255, 255, 255, 0.5);
 		}
 
 		.button-icon {
@@ -897,6 +905,7 @@
 
 		.button-label {
 			font-size: 0.75rem;
+			font-weight: 600; /* Make text bolder */
 		}
 	}
 
@@ -904,6 +913,7 @@
 	@media (max-width: 480px) {
 		.camera-frame {
 			border-radius: 1rem;
+			aspect-ratio: 16 / 12; /* Make it taller on mobile */
 		}
 
 		.demo-placeholder {
@@ -924,11 +934,11 @@
 			padding: 0.375rem 0.75rem;
 		}
 
-		/* Mobile camera controls */
+		/* Mobile camera controls - more opaque */
 		.camera-controls {
 			bottom: 0.75rem;
 			gap: 0.5rem;
-			opacity: 0.8;
+			opacity: 0.95; /* More opaque for better visibility */
 			visibility: visible;
 		}
 
@@ -940,6 +950,15 @@
 			padding: 0.5rem;
 			min-width: 3.5rem;
 			min-height: 3.5rem;
+			background: rgba(255, 255, 255, 0.85); /* Much more opaque background */
+			backdrop-filter: blur(20px);
+			border: 1px solid rgba(255, 255, 255, 0.4);
+			color: rgba(75, 85, 99, 0.95); /* Darker text for better contrast */
+		}
+
+		.control-button:hover {
+			background: rgba(255, 255, 255, 0.95);
+			border-color: rgba(255, 255, 255, 0.6);
 		}
 
 		.button-icon {
@@ -950,6 +969,7 @@
 
 		.button-label {
 			font-size: 0.625rem;
+			font-weight: 600; /* Make text bolder for better readability */
 		}
 
 		/* Touch feedback is more prominent on mobile */

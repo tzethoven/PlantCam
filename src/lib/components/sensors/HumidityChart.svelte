@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import Chart from 'chart.js/auto';
+	import Chart, { type EasingFunction } from 'chart.js/auto';
 	import type { SensorReading } from '$lib/server/sensorData';
 	import { showError, triggerHapticFeedback } from '$lib/utils/notifications';
 	import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
@@ -67,7 +67,7 @@
 	}
 
 	function updateChart() {
-		if (chart && data.length) {
+		if (chart && chart.ctx && data.length) {
 			const ctx = chart.ctx;
 			const chartArea = chart.chartArea;
 
@@ -105,81 +105,29 @@
 			axisTitleSize: isMobile ? 10 : isTablet ? 11 : 12,
 			axisTickSize: isMobile ? 9 : isTablet ? 10 : 11,
 			animationDuration: prefersReducedMotion ? 0 : isMobile ? 800 : 1500,
-			animationEasing: prefersReducedMotion ? 'linear' : 'easeInOutSine'
+			animationEasing: (prefersReducedMotion ? 'linear' : 'easeInOutSine') as EasingFunction
 		};
 	}
 
 	onMount(() => {
 		fetchData();
 		const interval = setInterval(fetchData, 30_000);
+		return () => {
+			clearInterval(interval);
+			if (chart) {
+				chart.destroy();
+			}
+		};
+	});
+
+	$: if (chart && chart.ctx && data.length && !isLoading) {
+		updateChart();
+	}
+
+	$: if (!isLoading && !hasError && canvas) {
+		if (chart) chart.destroy();
 
 		const config = getResponsiveConfig();
-		const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-		// Build plugins array conditionally based on reduced motion preference
-		const chartPlugins = [
-			{
-				id: 'humidityZones',
-				beforeDraw: (chart) => {
-					const ctx = chart.ctx;
-					const chartArea = chart.chartArea;
-					const yScale = chart.scales.y;
-
-					// Draw humidity comfort zones
-					Object.entries(HUMIDITY_ZONES).forEach(([zone, config]) => {
-						const yTop = yScale.getPixelForValue(config.max);
-						const yBottom = yScale.getPixelForValue(config.min);
-
-						ctx.save();
-						ctx.fillStyle = config.color;
-						ctx.fillRect(chartArea.left, yTop, chartArea.width, yBottom - yTop);
-						ctx.restore();
-					});
-				}
-			}
-		];
-
-		// Only add animated waterFlow plugin if reduced motion is not preferred
-		if (!prefersReducedMotion) {
-			chartPlugins.push({
-				id: 'waterFlow',
-				afterDraw: (chart) => {
-					const ctx = chart.ctx;
-					const chartArea = chart.chartArea;
-
-					// Create flowing water effect with animated waves
-					const time = Date.now() * 0.002;
-					const waveHeight = 3;
-					const waveLength = 50;
-
-					ctx.save();
-					ctx.globalAlpha = 0.1;
-					ctx.strokeStyle = '#0ea5e9';
-					ctx.lineWidth = 1;
-
-					// Draw multiple wave layers for depth
-					for (let layer = 0; layer < 3; layer++) {
-						ctx.beginPath();
-						const offsetY = chartArea.bottom - layer * 20;
-						const phaseOffset = (layer * Math.PI) / 3;
-
-						for (let x = chartArea.left; x <= chartArea.right; x += 2) {
-							const waveY =
-								offsetY +
-								Math.sin((x - chartArea.left) / waveLength + time + phaseOffset) * waveHeight;
-							if (x === chartArea.left) {
-								ctx.moveTo(x, waveY);
-							} else {
-								ctx.lineTo(x, waveY);
-							}
-						}
-						ctx.stroke();
-					}
-					ctx.restore();
-				}
-			});
-		}
-
 		chart = new Chart(canvas, {
 			type: 'line',
 			data: {
@@ -191,7 +139,7 @@
 						borderColor: '#0ea5e9',
 						backgroundColor: 'rgba(14, 165, 233, 0.2)',
 						fill: true,
-						tension: prefersReducedMotion ? 0.2 : 0.5, // Reduce tension for reduced motion
+						tension: 0.4,
 						borderWidth: config.borderWidth,
 						pointBackgroundColor: '#ffffff',
 						pointBorderColor: '#0ea5e9',
@@ -224,7 +172,7 @@
 							padding: config.legendPadding,
 							font: {
 								size: config.legendFontSize,
-								weight: '500'
+								weight: 500
 							},
 							color: '#374151'
 						}
@@ -241,7 +189,7 @@
 						padding: config.tooltipPadding,
 						titleFont: {
 							size: config.tooltipFontSize,
-							weight: '600'
+							weight: 600
 						},
 						bodyFont: {
 							size: config.tooltipBodySize
@@ -276,15 +224,14 @@
 							text: 'Air Humidity (%)',
 							font: {
 								size: config.axisTitleSize,
-								weight: '600'
+								weight: 600
 							},
 							color: '#374151'
 						},
 						min: 0,
 						max: 100,
 						grid: {
-							color: 'rgba(14, 165, 233, 0.1)',
-							drawBorder: false
+							color: 'rgba(14, 165, 233, 0.1)'
 						},
 						ticks: {
 							color: '#6b7280',
@@ -302,13 +249,12 @@
 							text: 'Time',
 							font: {
 								size: config.axisTitleSize,
-								weight: '600'
+								weight: 600
 							},
 							color: '#374151'
 						},
 						grid: {
-							color: 'rgba(14, 165, 233, 0.1)',
-							drawBorder: false
+							color: 'rgba(14, 165, 233, 0.1)'
 						},
 						ticks: {
 							color: '#6b7280',
@@ -319,14 +265,66 @@
 					}
 				}
 			},
-			plugins: chartPlugins
-		});
+			plugins: [
+				{
+					id: 'humidityZones',
+					beforeDraw: (chart) => {
+						const ctx = chart.ctx;
+						const chartArea = chart.chartArea;
+						const yScale = chart.scales.y;
 
-		return () => {
-			chart.destroy();
-			clearInterval(interval);
-		};
-	});
+						// Draw humidity comfort zones
+						Object.entries(HUMIDITY_ZONES).forEach(([zone, config]) => {
+							const yTop = yScale.getPixelForValue(config.max);
+							const yBottom = yScale.getPixelForValue(config.min);
+
+							ctx.save();
+							ctx.fillStyle = config.color;
+							ctx.fillRect(chartArea.left, yTop, chartArea.width, yBottom - yTop);
+							ctx.restore();
+						});
+					}
+				},
+				{
+					id: 'waterFlow',
+					afterDraw: (chart) => {
+						const ctx = chart.ctx;
+						const chartArea = chart.chartArea;
+
+						// Create flowing water effect with animated waves
+						const time = Date.now() * 0.002;
+						const waveHeight = 3;
+						const waveLength = 50;
+
+						ctx.save();
+						ctx.globalAlpha = 0.1;
+						ctx.strokeStyle = '#0ea5e9';
+						ctx.lineWidth = 1;
+
+						// Draw multiple wave layers for depth
+						for (let layer = 0; layer < 3; layer++) {
+							ctx.beginPath();
+							const offsetY = chartArea.bottom - layer * 20;
+							const phaseOffset = (layer * Math.PI) / 3;
+
+							for (let x = chartArea.left; x <= chartArea.right; x += 2) {
+								const waveY =
+									offsetY +
+									Math.sin((x - chartArea.left) / waveLength + time + phaseOffset) * waveHeight;
+								if (x === chartArea.left) {
+									ctx.moveTo(x, waveY);
+								} else {
+									ctx.lineTo(x, waveY);
+								}
+							}
+							ctx.stroke();
+						}
+						ctx.restore();
+					}
+				}
+			]
+		});
+	}
 </script>
 
 <div class="humidity-chart-container">
@@ -339,7 +337,9 @@
 			<button class="retry-button" on:click={fetchData}> Retry </button>
 		</div>
 	{:else}
-		<canvas bind:this={canvas}></canvas>
+		<div class="chart-wrapper">
+			<canvas bind:this={canvas}></canvas>
+		</div>
 		<div class="water-ripples">
 			<div class="ripple ripple-1"></div>
 			<div class="ripple ripple-2"></div>
@@ -353,34 +353,32 @@
 		position: relative;
 		height: 300px;
 		width: 100%;
+		max-width: 700px;
+		margin: 0 auto;
 		padding: 1rem;
-		background: linear-gradient(
-			135deg,
-			rgba(224, 242, 254, 0.3) 0%,
-			rgba(186, 230, 253, 0.2) 25%,
-			rgba(147, 197, 253, 0.3) 75%,
-			rgba(96, 165, 250, 0.4) 100%
-		);
-		backdrop-filter: blur(12px);
+		background: rgba(255, 255, 255, 0.1);
+		backdrop-filter: blur(10px);
 		border-radius: 1rem;
-		border: 1px solid rgba(14, 165, 233, 0.2);
+		border: 1px solid rgba(255, 255, 255, 0.2);
 		box-shadow:
-			0 8px 32px rgba(14, 165, 233, 0.1),
+			0 8px 32px rgba(31, 38, 135, 0.1),
 			inset 0 1px 0 rgba(255, 255, 255, 0.3);
 		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		overflow: hidden;
+		box-sizing: border-box;
+	}
+
+	.chart-wrapper {
+		width: 100%;
+		height: 100%;
+		position: relative;
 		overflow: hidden;
 	}
 
 	.humidity-chart-container:hover {
-		background: linear-gradient(
-			135deg,
-			rgba(224, 242, 254, 0.4) 0%,
-			rgba(186, 230, 253, 0.3) 25%,
-			rgba(147, 197, 253, 0.4) 75%,
-			rgba(96, 165, 250, 0.5) 100%
-		);
+		background: rgba(255, 255, 255, 0.15);
 		box-shadow:
-			0 12px 40px rgba(14, 165, 233, 0.15),
+			0 12px 40px rgba(31, 38, 135, 0.15),
 			inset 0 1px 0 rgba(255, 255, 255, 0.4);
 		transform: translateY(-2px);
 	}
@@ -403,6 +401,8 @@
 	canvas {
 		width: 100% !important;
 		height: 100% !important;
+		max-width: 100% !important;
+		display: block !important;
 		position: relative;
 		z-index: 2;
 	}
@@ -531,15 +531,9 @@
 
 		/* Disable hover effects on mobile */
 		.humidity-chart-container:hover {
-			background: linear-gradient(
-				135deg,
-				rgba(224, 242, 254, 0.3) 0%,
-				rgba(186, 230, 253, 0.2) 25%,
-				rgba(147, 197, 253, 0.3) 75%,
-				rgba(96, 165, 250, 0.4) 100%
-			);
+			background: rgba(255, 255, 255, 0.1);
 			box-shadow:
-				0 8px 32px rgba(14, 165, 233, 0.1),
+				0 8px 32px rgba(31, 38, 135, 0.1),
 				inset 0 1px 0 rgba(255, 255, 255, 0.3);
 			transform: none;
 		}
@@ -574,15 +568,9 @@
 
 		.humidity-chart-container:hover {
 			transform: none !important;
-			background: linear-gradient(
-				135deg,
-				rgba(224, 242, 254, 0.3) 0%,
-				rgba(186, 230, 253, 0.2) 25%,
-				rgba(147, 197, 253, 0.3) 75%,
-				rgba(96, 165, 250, 0.4) 100%
-			) !important;
+			background: rgba(255, 255, 255, 0.1) !important;
 			box-shadow:
-				0 8px 32px rgba(14, 165, 233, 0.1),
+				0 8px 32px rgba(31, 38, 135, 0.1),
 				inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
 		}
 

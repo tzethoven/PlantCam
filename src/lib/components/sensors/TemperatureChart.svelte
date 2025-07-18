@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import Chart from 'chart.js/auto';
+	import Chart, { type EasingFunction } from 'chart.js/auto';
 	import type { SensorReading } from '$lib/server/sensorData';
 	import { showError, triggerHapticFeedback } from '$lib/utils/notifications';
 	import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
@@ -62,7 +62,7 @@
 	}
 
 	function updateChart() {
-		if (chart && data.length) {
+		if (chart && chart.ctx && data.length) {
 			const ctx = chart.ctx;
 			const chartArea = chart.chartArea;
 
@@ -100,16 +100,29 @@
 			axisTitleSize: isMobile ? 10 : isTablet ? 11 : 12,
 			axisTickSize: isMobile ? 9 : isTablet ? 10 : 11,
 			animationDuration: prefersReducedMotion ? 0 : isMobile ? 600 : 1000,
-			animationEasing: prefersReducedMotion ? 'linear' : 'easeInOutCubic'
+			animationEasing: (prefersReducedMotion ? 'linear' : 'easeInOutCubic') as EasingFunction
 		};
 	}
 
 	onMount(() => {
 		fetchData();
 		const interval = setInterval(fetchData, 30_000);
+		return () => {
+			clearInterval(interval);
+			if (chart) {
+				chart.destroy();
+			}
+		};
+	});
+
+	$: if (chart && chart.ctx && data.length && !isLoading) {
+		updateChart();
+	}
+
+	$: if (!isLoading && !hasError && canvas) {
+		if (chart) chart.destroy();
 
 		const config = getResponsiveConfig();
-
 		chart = new Chart(canvas, {
 			type: 'line',
 			data: {
@@ -154,7 +167,7 @@
 							padding: config.legendPadding,
 							font: {
 								size: config.legendFontSize,
-								weight: '500'
+								weight: 500
 							},
 							color: '#374151'
 						}
@@ -171,7 +184,7 @@
 						padding: config.tooltipPadding,
 						titleFont: {
 							size: config.tooltipFontSize,
-							weight: '600'
+							weight: 600
 						},
 						bodyFont: {
 							size: config.tooltipBodySize
@@ -200,15 +213,14 @@
 							text: 'Temperature (°C)',
 							font: {
 								size: config.axisTitleSize,
-								weight: '600'
+								weight: 600
 							},
 							color: '#374151'
 						},
 						min: 10,
 						max: 30,
 						grid: {
-							color: 'rgba(156, 163, 175, 0.2)',
-							drawBorder: false
+							color: 'rgba(156, 163, 175, 0.2)'
 						},
 						ticks: {
 							color: '#6b7280',
@@ -226,13 +238,12 @@
 							text: 'Time',
 							font: {
 								size: config.axisTitleSize,
-								weight: '600'
+								weight: 600
 							},
 							color: '#374151'
 						},
 						grid: {
-							color: 'rgba(156, 163, 175, 0.2)',
-							drawBorder: false
+							color: 'rgba(156, 163, 175, 0.2)'
 						},
 						ticks: {
 							color: '#6b7280',
@@ -265,12 +276,7 @@
 				}
 			]
 		});
-
-		return () => {
-			chart.destroy();
-			clearInterval(interval);
-		};
-	});
+	}
 </script>
 
 <div class="temperature-chart-container">
@@ -283,7 +289,9 @@
 			<button class="retry-button" on:click={fetchData}> Retry </button>
 		</div>
 	{:else}
-		<canvas bind:this={canvas}></canvas>
+		<div class="chart-wrapper">
+			<canvas bind:this={canvas}></canvas>
+		</div>
 	{/if}
 </div>
 
@@ -292,6 +300,8 @@
 		position: relative;
 		height: 300px;
 		width: 100%;
+		max-width: 700px;
+		margin: 0 auto;
 		padding: 1rem;
 		background: rgba(255, 255, 255, 0.1);
 		backdrop-filter: blur(10px);
@@ -301,6 +311,15 @@
 			0 8px 32px rgba(31, 38, 135, 0.1),
 			inset 0 1px 0 rgba(255, 255, 255, 0.3);
 		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		overflow: hidden;
+		box-sizing: border-box;
+	}
+
+	.chart-wrapper {
+		width: 100%;
+		height: 100%;
+		position: relative;
+		overflow: hidden;
 	}
 
 	.temperature-chart-container:hover {
@@ -314,6 +333,8 @@
 	canvas {
 		width: 100% !important;
 		height: 100% !important;
+		max-width: 100% !important;
+		display: block !important;
 	}
 
 	.error-state {

@@ -1,12 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import Chart from 'chart.js/auto';
+	import Chart, { type EasingFunction } from 'chart.js/auto';
 	import { showError, triggerHapticFeedback } from '$lib/utils/notifications';
 	import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
 
 	let canvas: HTMLCanvasElement;
 	let chart: Chart;
-	let currentMoisture = 45; // Current moisture level for animations
 	let isLoading = true;
 	let hasError = false;
 
@@ -21,6 +20,23 @@
 	// Enhanced mock data with more realistic soil moisture patterns
 	const labels = ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30'];
 	const data = [45, 42, 38, 35, 32, 28, 25, 22]; // Gradual decrease showing need for watering
+
+	async function fetchData() {
+		try {
+			isLoading = true;
+			hasError = false;
+			// Simulate API call for soil moisture data
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+
+			updateChart();
+			isLoading = false;
+		} catch (error) {
+			console.error('Failed to fetch soil moisture data:', error);
+			hasError = true;
+			isLoading = false;
+			showError('Failed to load soil moisture data', 'Sensor Error');
+		}
+	}
 
 	function getSoilMoistureStatus(moisture: number): 'optimal' | 'acceptable' | 'dry' | 'critical' {
 		if (moisture >= SOIL_ZONES.optimal.min && moisture <= SOIL_ZONES.optimal.max) return 'optimal';
@@ -48,12 +64,9 @@
 	}
 
 	function updateChart() {
-		if (chart) {
+		if (chart && chart.ctx && data.length) {
 			const ctx = chart.ctx;
 			const chartArea = chart.chartArea;
-
-			// Update current moisture for status indicator
-			currentMoisture = data[data.length - 1];
 
 			chart.data.datasets[0].backgroundColor = createEarthGradient(ctx, chartArea);
 			chart.data.datasets[0].borderColor = createEarthBorderGradient(ctx, chartArea);
@@ -66,6 +79,7 @@
 	function getResponsiveConfig() {
 		const isMobile = window.innerWidth <= 480;
 		const isTablet = window.innerWidth <= 768 && window.innerWidth > 480;
+		const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 		return {
 			pointRadius: isMobile ? 3 : 4,
@@ -78,32 +92,33 @@
 			tooltipPadding: isMobile ? 8 : 12,
 			axisTitleSize: isMobile ? 10 : isTablet ? 11 : 12,
 			axisTickSize: isMobile ? 9 : isTablet ? 10 : 11,
-			animationDuration: isMobile ? 800 : 1200
+			animationDuration: isMobile ? 800 : 1200,
+			animationEasing: (prefersReducedMotion ? 'linear' : 'easeInOutCubic') as EasingFunction
 		};
 	}
 
-	async function fetchData() {
-		try {
-			isLoading = true;
-			hasError = false;
-			// Simulate API call for soil moisture data
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+	onMount(() => {
+		fetchData();
+		const interval = setInterval(fetchData, 30_000);
+		return () => {
+			clearInterval(interval);
+			if (chart) {
+				chart.destroy();
+			}
+		};
+	});
 
-			// Update current moisture for status indicator
-			currentMoisture = data[data.length - 1];
-			updateChart();
-			isLoading = false;
-		} catch (error) {
-			console.error('Failed to fetch soil moisture data:', error);
-			hasError = true;
-			isLoading = false;
-			showError('Failed to load soil moisture data', 'Sensor Error');
-		}
+	$: moistureStatus = getSoilMoistureStatus(data[data.length - 1]);
+	$: isLowMoisture = data[data.length - 1] < 30;
+
+	$: if (chart && chart.ctx && data.length && !isLoading) {
+		updateChart();
 	}
 
-	onMount(() => {
-		const config = getResponsiveConfig();
+	$: if (!isLoading && !hasError && canvas) {
+		if (chart) chart.destroy();
 
+		const config = getResponsiveConfig();
 		chart = new Chart(canvas, {
 			type: 'line',
 			data: {
@@ -148,7 +163,7 @@
 							padding: config.legendPadding,
 							font: {
 								size: config.legendFontSize,
-								weight: '500'
+								weight: 500
 							},
 							color: '#374151'
 						}
@@ -165,7 +180,7 @@
 						padding: config.tooltipPadding,
 						titleFont: {
 							size: config.tooltipFontSize,
-							weight: '600'
+							weight: 600
 						},
 						bodyFont: {
 							size: config.tooltipBodySize
@@ -200,15 +215,14 @@
 							text: 'Soil Moisture (%)',
 							font: {
 								size: config.axisTitleSize,
-								weight: '600'
+								weight: 600
 							},
 							color: '#374151'
 						},
 						min: 0,
 						max: 100,
 						grid: {
-							color: 'rgba(101, 163, 13, 0.1)',
-							drawBorder: false
+							color: 'rgba(101, 163, 13, 0.1)'
 						},
 						ticks: {
 							color: '#6b7280',
@@ -226,13 +240,12 @@
 							text: 'Time',
 							font: {
 								size: config.axisTitleSize,
-								weight: '600'
+								weight: 600
 							},
 							color: '#374151'
 						},
 						grid: {
-							color: 'rgba(101, 163, 13, 0.1)',
-							drawBorder: false
+							color: 'rgba(101, 163, 13, 0.1)'
 						},
 						ticks: {
 							color: '#6b7280',
@@ -289,21 +302,10 @@
 				}
 			]
 		});
-
-		// Initial update to apply gradients
-		setTimeout(updateChart, 100);
-
-		// Fetch initial data
-		fetchData();
-
-		return () => chart.destroy();
-	});
-
-	$: moistureStatus = getSoilMoistureStatus(currentMoisture);
-	$: isLowMoisture = currentMoisture < 30;
+	}
 </script>
 
-<div class="soil-chart-container" class:low-moisture={isLowMoisture}>
+<div class="soil-humidity-chart-container">
 	{#if isLoading}
 		<LoadingSkeleton variant="chart" height="100%" />
 	{:else if hasError}
@@ -313,7 +315,9 @@
 			<button class="retry-button" on:click={fetchData}> Retry </button>
 		</div>
 	{:else}
-		<canvas bind:this={canvas}></canvas>
+		<div class="chart-wrapper">
+			<canvas bind:this={canvas}></canvas>
+		</div>
 
 		<!-- Moisture status indicator -->
 		<div
@@ -329,7 +333,7 @@
 				{/if}
 			</div>
 			<div class="status-text">
-				<span class="moisture-value">{currentMoisture}%</span>
+				<span class="moisture-value">{data[data.length - 1]}%</span>
 				<span class="moisture-label">{moistureStatus}</span>
 			</div>
 		</div>
@@ -345,48 +349,36 @@
 </div>
 
 <style>
-	.soil-chart-container {
+	.soil-humidity-chart-container {
 		position: relative;
 		height: 300px;
 		width: 100%;
+		max-width: 700px;
+		margin: 0 auto;
 		padding: 1rem;
-		background: linear-gradient(
-			135deg,
-			rgba(254, 243, 199, 0.4) 0%,
-			rgba(253, 230, 138, 0.3) 25%,
-			rgba(217, 119, 6, 0.2) 50%,
-			rgba(101, 163, 13, 0.3) 75%,
-			rgba(34, 197, 94, 0.4) 100%
-		);
-		backdrop-filter: blur(12px);
+		background: rgba(255, 255, 255, 0.1);
+		backdrop-filter: blur(10px);
 		border-radius: 1rem;
-		border: 1px solid rgba(101, 163, 13, 0.2);
+		border: 1px solid rgba(255, 255, 255, 0.2);
 		box-shadow:
-			0 8px 32px rgba(101, 163, 13, 0.1),
+			0 8px 32px rgba(31, 38, 135, 0.1),
 			inset 0 1px 0 rgba(255, 255, 255, 0.3);
 		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 		overflow: hidden;
+		box-sizing: border-box;
 	}
 
-	.soil-chart-container.low-moisture {
-		border-color: rgba(251, 191, 36, 0.4);
-		box-shadow:
-			0 8px 32px rgba(251, 191, 36, 0.15),
-			inset 0 1px 0 rgba(255, 255, 255, 0.3);
-		animation: lowMoistureGlow 2s ease-in-out infinite alternate;
+	.chart-wrapper {
+		width: 100%;
+		height: 100%;
+		position: relative;
+		overflow: hidden;
 	}
 
-	.soil-chart-container:hover {
-		background: linear-gradient(
-			135deg,
-			rgba(254, 243, 199, 0.5) 0%,
-			rgba(253, 230, 138, 0.4) 25%,
-			rgba(217, 119, 6, 0.3) 50%,
-			rgba(101, 163, 13, 0.4) 75%,
-			rgba(34, 197, 94, 0.5) 100%
-		);
+	.soil-humidity-chart-container:hover {
+		background: rgba(255, 255, 255, 0.15);
 		box-shadow:
-			0 12px 40px rgba(101, 163, 13, 0.15),
+			0 12px 40px rgba(31, 38, 135, 0.15),
 			inset 0 1px 0 rgba(255, 255, 255, 0.4);
 		transform: translateY(-2px);
 	}
@@ -394,8 +386,8 @@
 	canvas {
 		width: 100% !important;
 		height: 100% !important;
-		position: relative;
-		z-index: 2;
+		max-width: 100% !important;
+		display: block !important;
 	}
 
 	.error-state {
@@ -555,7 +547,7 @@
 
 	/* Tablet Landscape (768px - 1023px) */
 	@media (max-width: 1023px) and (min-width: 768px) {
-		.soil-chart-container {
+		.soil-humidity-chart-container {
 			height: 280px;
 			padding: 0.875rem;
 		}
@@ -577,7 +569,7 @@
 
 	/* Tablet Portrait & Large Mobile (481px - 767px) */
 	@media (max-width: 767px) and (min-width: 481px) {
-		.soil-chart-container {
+		.soil-humidity-chart-container {
 			height: 260px;
 			padding: 0.75rem;
 		}
@@ -603,7 +595,7 @@
 
 	/* Mobile (320px - 480px) */
 	@media (max-width: 480px) {
-		.soil-chart-container {
+		.soil-humidity-chart-container {
 			height: 240px;
 			padding: 0.75rem;
 			border-radius: 0.75rem;
@@ -634,17 +626,10 @@
 		}
 
 		/* Disable hover effects on mobile */
-		.soil-chart-container:hover {
-			background: linear-gradient(
-				135deg,
-				rgba(254, 243, 199, 0.4) 0%,
-				rgba(253, 230, 138, 0.3) 25%,
-				rgba(217, 119, 6, 0.2) 50%,
-				rgba(101, 163, 13, 0.3) 75%,
-				rgba(34, 197, 94, 0.4) 100%
-			);
+		.soil-humidity-chart-container:hover {
+			background: rgba(255, 255, 255, 0.1);
 			box-shadow:
-				0 8px 32px rgba(101, 163, 13, 0.1),
+				0 8px 32px rgba(31, 38, 135, 0.1),
 				inset 0 1px 0 rgba(255, 255, 255, 0.3);
 			transform: none;
 		}
@@ -652,7 +637,7 @@
 
 	/* Extra small mobile (max 320px) */
 	@media (max-width: 320px) {
-		.soil-chart-container {
+		.soil-humidity-chart-container {
 			height: 220px;
 			padding: 0.625rem;
 		}
@@ -683,7 +668,7 @@
 
 	/* Reduced motion support */
 	@media (prefers-reduced-motion: reduce) {
-		.soil-chart-container.low-moisture {
+		.soil-humidity-chart-container.low-moisture {
 			animation: none;
 		}
 
@@ -696,7 +681,7 @@
 			opacity: 0;
 		}
 
-		.soil-chart-container:hover {
+		.soil-humidity-chart-container:hover {
 			transform: none;
 		}
 	}

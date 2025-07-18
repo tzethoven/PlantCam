@@ -51,25 +51,8 @@
 
 	<!-- Main Content Grid -->
 	<main class="dashboard-grid">
-		<!-- Camera Feed Section -->
-		<section
-			class="camera-section glass-card animate-entrance animate-entrance-delay-2"
-			class:mounted
-		>
-			<div class="section-header">
-				<h2 class="text-heading-2 text-gray-800">Live Stream</h2>
-				<div class="section-badge">
-					<span class="status-dot status-active"></span>
-					<span class="text-caption text-gray-600">Live</span>
-				</div>
-			</div>
-			<div class="section-content">
-				<CameraFeed />
-			</div>
-		</section>
-
 		<!-- Environmental Charts Section -->
-		<section class="charts-section animate-entrance animate-entrance-delay-3" class:mounted>
+		<section class="charts-section animate-entrance animate-entrance-delay-2" class:mounted>
 			<div class="chart-card glass-card">
 				<div class="section-header">
 					<h2 class="text-heading-2 text-gray-800">Temperature</h2>
@@ -101,6 +84,23 @@
 			</div>
 		</section>
 
+		<!-- Camera Feed Section -->
+		<section
+			class="camera-section glass-card animate-entrance animate-entrance-delay-3"
+			class:mounted
+		>
+			<div class="section-header">
+				<h2 class="text-heading-2 text-gray-800">Live Stream</h2>
+				<div class="section-badge">
+					<span class="status-dot status-active"></span>
+					<span class="text-caption text-gray-600">Live</span>
+				</div>
+			</div>
+			<div class="section-content">
+				<CameraFeed />
+			</div>
+		</section>
+
 		<!-- Watering Control Section -->
 		<section
 			class="control-section glass-card animate-entrance animate-entrance-delay-4"
@@ -125,30 +125,19 @@
 		min-height: 100vh;
 		position: relative;
 		z-index: 10;
-		padding: 2rem;
-		max-width: 1400px;
+		padding: 1.5rem;
+		max-width: 1000px;
 		margin: 0 auto;
 		display: grid;
 		grid-template-rows: auto auto 1fr;
-		gap: 2.5rem;
-		background: linear-gradient(
-			135deg,
-			rgba(240, 253, 244, 0.8) 0%,
-			rgba(220, 252, 231, 0.6) 25%,
-			rgba(224, 242, 254, 0.6) 75%,
-			rgba(240, 249, 255, 0.8) 100%
-		);
-		backdrop-filter: blur(20px);
-		border-radius: 2rem;
-		border: 1px solid rgba(255, 255, 255, 0.2);
-		box-shadow:
-			0 25px 50px -12px rgba(31, 38, 135, 0.15),
-			0 0 40px rgba(34, 197, 94, 0.05);
+		gap: 2rem;
 	}
 
 	.dashboard-header {
 		text-align: center;
 		padding: 2rem 0;
+		max-width: 1000px;
+		margin: 0 auto;
 	}
 
 	.dashboard-header h1 {
@@ -159,15 +148,14 @@
 	.dashboard-grid {
 		display: grid;
 		grid-template-columns: repeat(12, 1fr);
-		grid-template-rows: auto auto;
+		grid-template-rows: auto auto auto;
 		gap: 2rem;
 		grid-template-areas:
-			'camera camera camera camera camera camera charts charts charts charts charts charts'
+			'charts charts charts charts charts charts charts charts charts charts charts charts'
+			'camera camera camera camera camera camera camera camera camera camera camera camera'
 			'control control control control control control control control control control control control';
-	}
-
-	.camera-section {
-		grid-area: camera;
+		max-width: 1000px;
+		margin: 0 auto;
 	}
 
 	.charts-section {
@@ -175,6 +163,10 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1.5rem;
+	}
+
+	.camera-section {
+		grid-area: camera;
 	}
 
 	.control-section {
@@ -437,7 +429,8 @@
 		.dashboard-grid {
 			grid-template-columns: repeat(12, 1fr);
 			grid-template-areas:
-				'camera camera camera camera camera camera charts charts charts charts charts charts'
+				'charts charts charts charts charts charts charts charts charts charts charts charts'
+				'camera camera camera camera camera camera camera camera camera camera camera camera'
 				'control control control control control control control control control control control control';
 		}
 	}
@@ -447,7 +440,8 @@
 		.dashboard-grid {
 			grid-template-columns: repeat(8, 1fr);
 			grid-template-areas:
-				'camera camera camera camera camera charts charts charts'
+				'charts charts charts charts charts charts charts charts'
+				'camera camera camera camera camera camera camera camera'
 				'control control control control control control control control';
 		}
 
@@ -459,16 +453,17 @@
 	/* Tablet Landscape (768px - 1023px) - Enhanced 2-column layout */
 	@media (max-width: 1023px) and (min-width: 768px) {
 		.dashboard-container {
-			padding: 1.5rem;
-			gap: 2rem;
-			max-width: 1000px;
+			padding: 1.25rem;
+			gap: 1.5rem;
+			max-width: 800px;
 		}
 
 		.dashboard-grid {
-			grid-template-columns: 1fr 1fr;
+			grid-template-columns: 1fr;
 			grid-template-areas:
-				'camera charts'
-				'control control';
+				'charts'
+				'camera'
+				'control';
 			gap: 1.5rem;
 			align-items: start;
 		}
@@ -564,8 +559,8 @@
 		.dashboard-grid {
 			grid-template-columns: 1fr;
 			grid-template-areas:
-				'camera'
 				'charts'
+				'camera'
 				'control';
 			gap: 1.25rem;
 		}
@@ -624,8 +619,8 @@
 		.dashboard-grid {
 			grid-template-columns: 1fr;
 			grid-template-areas:
-				'camera'
 				'charts'
+				'camera'
 				'control';
 			gap: 1rem;
 		}
@@ -636,7 +631,7 @@
 		}
 
 		.chart-card {
-			min-height: 160px;
+			min-height: 180px;
 			padding: 1rem;
 		}
 
@@ -807,6 +802,72 @@
 				rgba(224, 242, 254, 0.7) 75%,
 				rgba(240, 249, 255, 0.9) 100%
 			);
+		}
+	}
+
+	/* Mobile: Remove container constraints for full-width experience */
+	@media (max-width: 768px) {
+		.dashboard-container {
+			padding: 0;
+			max-width: none;
+			margin: 0;
+			gap: 1rem;
+		}
+
+		.dashboard-header {
+			padding: 1rem;
+			background: rgba(255, 255, 255, 0.1);
+			backdrop-filter: blur(10px);
+			margin: 0 0.5rem 1rem 0.5rem;
+			border-radius: 1rem;
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			max-width: none;
+		}
+
+		.dashboard-header h1 {
+			font-size: 1.75rem;
+		}
+
+		.dashboard-header p {
+			font-size: 0.875rem;
+		}
+
+		.dashboard-grid {
+			gap: 1rem;
+			padding: 0 0.5rem;
+			max-width: none;
+		}
+
+		/* Make individual cards more prominent on mobile */
+		.glass-card {
+			border-radius: 1rem;
+			margin-bottom: 1rem;
+		}
+	}
+
+	/* Extra small mobile: Even more compact */
+	@media (max-width: 480px) {
+		.dashboard-container {
+			gap: 0.75rem;
+		}
+
+		.dashboard-header {
+			margin: 0 0.25rem 0.75rem 0.25rem;
+			padding: 0.75rem;
+		}
+
+		.dashboard-header h1 {
+			font-size: 1.5rem;
+		}
+
+		.dashboard-grid {
+			padding: 0 0.25rem;
+			gap: 0.75rem;
+		}
+
+		.glass-card {
+			border-radius: 0.75rem;
+			margin-bottom: 0.75rem;
 		}
 	}
 </style>

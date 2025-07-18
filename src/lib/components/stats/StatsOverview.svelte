@@ -126,6 +126,12 @@
 
 	async function fetchWateringStatus() {
 		try {
+			// Mock watering status for development
+			if (process.env.NODE_ENV === 'development') {
+				wateringStatus = { success: true, isWatering: wateringStatus.isWatering };
+				return;
+			}
+
 			const response = await fetch('/api/water/status');
 			if (response.ok) {
 				wateringStatus = await response.json();
@@ -568,7 +574,6 @@
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
-		box-shadow: 0 0 8px currentColor;
 	}
 
 	.status-indicator.pulsing.active {

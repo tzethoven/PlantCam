@@ -15,6 +15,7 @@
 	let totalDuration = 30; // seconds
 	let progressInterval: NodeJS.Timeout | null = null;
 	let isLoading = false;
+	let isInitialLoading = true; // Add initial loading state
 	let buttonElement: HTMLButtonElement;
 
 	let schedule = {
@@ -77,6 +78,11 @@
 
 	async function fetchWateringStatus() {
 		try {
+			// Mock watering status for development
+			if (process.env.NODE_ENV === 'development') {
+				return;
+			}
+
 			const response = await fetch('/api/water/status');
 			if (response.ok) {
 				const data = await response.json();
@@ -122,6 +128,14 @@
 	async function startWatering() {
 		isLoading = true;
 		try {
+			// Mock watering status for development
+			if (process.env.NODE_ENV === 'development') {
+				isWatering = !isWatering;
+				startProgressTracking();
+				successActionFeedback('Watering started successfully!', 'Plant Care');
+				return;
+			}
+
 			const response = await fetch('/api/water/toggle', {
 				method: 'POST',
 				headers: {
@@ -151,6 +165,12 @@
 	async function stopWatering() {
 		isLoading = true;
 		try {
+			// Mock watering status for development
+			if (process.env.NODE_ENV === 'development') {
+				isWatering = !isWatering;
+				return;
+			}
+
 			const response = await fetch('/api/water/toggle', {
 				method: 'POST',
 				headers: {
@@ -198,6 +218,12 @@
 		fetchWateringStatus();
 		// Check status every 5 seconds to stay in sync
 		const interval = setInterval(fetchWateringStatus, 5000);
+
+		// Set initial loading to false after a short delay to show the skeleton
+		setTimeout(() => {
+			isInitialLoading = false;
+		}, 1500);
+
 		return () => {
 			clearInterval(interval);
 			if (progressInterval) {
@@ -208,164 +234,201 @@
 </script>
 
 <div class="watering-control">
-	<!-- Enhanced Watering Button -->
-	<div class="watering-button-container">
-		<button
-			bind:this={buttonElement}
-			class="watering-button {isWatering ? 'watering-active' : 'watering-ready'}"
-			class:loading={isLoading}
-			on:click={toggleWatering}
-			disabled={isLoading}
-		>
-			<!-- Progress Ring -->
-			<div class="progress-ring">
-				<svg class="progress-svg" viewBox="0 0 120 120">
-					<circle
-						class="progress-track"
-						cx="60"
-						cy="60"
-						r="54"
-						fill="none"
-						stroke="rgba(255, 255, 255, 0.2)"
-						stroke-width="4"
-					/>
-					<circle
-						class="progress-bar"
-						cx="60"
-						cy="60"
-						r="54"
-						fill="none"
-						stroke="url(#progressGradient)"
-						stroke-width="4"
-						stroke-linecap="round"
-						style="stroke-dasharray: 339.292; stroke-dashoffset: {339.292 -
-							(339.292 * wateringProgress) / 100};"
-					/>
-					<defs>
-						<linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-							<stop offset="0%" style="stop-color:#60A5FA;stop-opacity:1" />
-							<stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
-						</linearGradient>
-					</defs>
-				</svg>
-			</div>
-
-			<!-- Water Drop Icon -->
-			<div class="water-drop-container">
-				<div class="water-drop {isWatering ? 'filling' : ''}">
-					<svg viewBox="0 0 24 24" class="drop-icon">
-						<path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" fill="currentColor" />
-					</svg>
-					<div class="water-fill" style="height: {wateringProgress}%"></div>
+	{#if isInitialLoading}
+		<!-- Loading Skeleton -->
+		<div class="loading-skeleton-container">
+			<!-- Watering Button Skeleton -->
+			<div class="watering-button-skeleton">
+				<div class="skeleton-circle"></div>
+				<div class="skeleton-text">
+					<div class="skeleton-line skeleton-line-long"></div>
+					<div class="skeleton-line skeleton-line-short"></div>
 				</div>
 			</div>
 
-			<!-- Button Text -->
-			<div class="button-content">
-				<span class="button-text">
-					{#if isWatering}
-						<span class="action-text">Watering...</span>
-						<span class="time-text">{remainingTime}s remaining</span>
-					{:else}
-						<span class="action-text">Start Watering</span>
-						<span class="time-text">Ready to water</span>
-					{/if}
-				</span>
+			<!-- Schedule Section Skeleton -->
+			<div class="schedule-skeleton">
+				<div class="skeleton-title"></div>
+				<div class="skeleton-toggle">
+					<div class="skeleton-toggle-slider"></div>
+					<div class="skeleton-toggle-label"></div>
+				</div>
+				<div class="skeleton-inputs">
+					<div class="skeleton-input-group">
+						<div class="skeleton-label"></div>
+						<div class="skeleton-input"></div>
+					</div>
+					<div class="skeleton-input-group">
+						<div class="skeleton-label"></div>
+						<div class="skeleton-input"></div>
+					</div>
+				</div>
+				<div class="skeleton-preview">
+					<div class="skeleton-preview-header"></div>
+					<div class="skeleton-preview-content"></div>
+				</div>
 			</div>
+		</div>
+	{:else}
+		<!-- Enhanced Watering Button -->
+		<div class="watering-button-container">
+			<button
+				bind:this={buttonElement}
+				class="watering-button {isWatering ? 'watering-active' : 'watering-ready'}"
+				class:loading={isLoading}
+				on:click={toggleWatering}
+				disabled={isLoading}
+			>
+				<!-- Progress Ring -->
+				<div class="progress-ring">
+					<svg class="progress-svg" viewBox="0 0 120 120">
+						<circle
+							class="progress-track"
+							cx="60"
+							cy="60"
+							r="54"
+							fill="none"
+							stroke="rgba(255, 255, 255, 0.2)"
+							stroke-width="4"
+						/>
+						<circle
+							class="progress-bar"
+							cx="60"
+							cy="60"
+							r="54"
+							fill="none"
+							stroke="url(#progressGradient)"
+							stroke-width="4"
+							stroke-linecap="round"
+							style="stroke-dasharray: 339.292; stroke-dashoffset: {339.292 -
+								(339.292 * wateringProgress) / 100};"
+						/>
+						<defs>
+							<linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+								<stop offset="0%" style="stop-color:#60A5FA;stop-opacity:1" />
+								<stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+							</linearGradient>
+						</defs>
+					</svg>
+				</div>
 
-			<!-- Pulsing Effect -->
-			{#if isWatering}
-				<div class="pulse-effect"></div>
-			{/if}
-		</button>
-	</div>
+				<!-- Water Drop Icon -->
+				<div class="water-drop-container">
+					<div class="water-drop {isWatering ? 'filling' : ''}">
+						<svg viewBox="0 0 24 24" class="drop-icon">
+							<path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" fill="currentColor" />
+						</svg>
+						<div class="water-fill" style="height: {wateringProgress}%"></div>
+					</div>
+				</div>
 
-	<!-- Watering Schedule Section -->
-	<div class="schedule-section">
-		<h3 class="schedule-title">Watering Schedule</h3>
+				<!-- Button Text -->
+				<div class="button-content">
+					<span class="button-text">
+						{#if isWatering}
+							<span class="action-text">Watering...</span>
+							<span class="time-text">{remainingTime}s remaining</span>
+						{:else}
+							<span class="action-text">Start Watering</span>
+							<span class="time-text">Ready to water</span>
+						{/if}
+					</span>
+				</div>
 
-		<!-- Toggle Switch -->
-		<div class="toggle-container">
-			<label class="toggle-switch">
-				<input type="checkbox" bind:checked={schedule.enabled} class="toggle-input" />
-				<span class="toggle-slider">
-					<span class="toggle-thumb"></span>
-				</span>
-				<span class="toggle-label">Enable automatic watering</span>
-			</label>
+				<!-- Pulsing Effect -->
+				{#if isWatering}
+					<div class="pulse-effect"></div>
+				{/if}
+			</button>
 		</div>
 
-		{#if schedule.enabled}
-			<div class="schedule-controls">
-				<div class="control-group">
-					<label class="control-label">
-						<span class="label-text">Frequency (hours)</span>
-						<div class="input-container">
-							<input
-								type="number"
-								min="1"
-								max="72"
-								bind:value={schedule.frequency}
-								on:input={handleFrequencyChange}
-								on:focus={handleInputFocus}
-								class="modern-input {validationErrors.frequency ? 'error' : ''}"
-								class:shake={validationErrors.frequency}
-							/>
-							<div class="input-accent"></div>
-							{#if validationErrors.frequency}
-								<div class="error-message" transition:slide={{ duration: 300 }}>
-									<span class="error-icon">⚠️</span>
-									<span class="error-text">{validationErrors.frequency}</span>
-								</div>
-							{/if}
-						</div>
-					</label>
-				</div>
+		<!-- Watering Schedule Section -->
+		<div class="schedule-section">
+			<h3 class="schedule-title">Watering Schedule</h3>
 
-				<div class="control-group">
-					<label class="control-label">
-						<span class="label-text">Duration (seconds)</span>
-						<div class="input-container">
-							<input
-								type="number"
-								min="5"
-								max="300"
-								bind:value={schedule.duration}
-								on:input={handleDurationChange}
-								class="modern-input {validationErrors.duration ? 'error' : ''}"
-								class:shake={validationErrors.duration}
-							/>
-							<div class="input-accent"></div>
-							{#if validationErrors.duration}
-								<div class="error-message" transition:slide={{ duration: 300 }}>
-									<span class="error-icon">⚠️</span>
-									<span class="error-text">{validationErrors.duration}</span>
-								</div>
-							{/if}
-						</div>
-					</label>
-				</div>
+			<!-- Toggle Switch -->
+			<div class="toggle-container">
+				<label class="toggle-switch">
+					<input type="checkbox" bind:checked={schedule.enabled} class="toggle-input" />
+					<span class="toggle-slider">
+						<span class="toggle-thumb"></span>
+					</span>
+					<span class="toggle-label">Enable automatic watering</span>
+				</label>
+			</div>
 
-				<!-- Schedule Preview -->
-				<div class="schedule-preview">
-					<div class="preview-header">
-						<span class="preview-title">Schedule Preview</span>
+			{#if schedule.enabled}
+				<div class="schedule-controls">
+					<div class="control-group">
+						<label class="control-label">
+							<span class="label-text">Frequency (hours)</span>
+							<div class="input-container">
+								<input
+									type="number"
+									min="1"
+									max="72"
+									bind:value={schedule.frequency}
+									on:input={handleFrequencyChange}
+									on:focus={handleInputFocus}
+									class="modern-input {validationErrors.frequency ? 'error' : ''}"
+									class:shake={validationErrors.frequency}
+								/>
+								<div class="input-accent"></div>
+								{#if validationErrors.frequency}
+									<div class="error-message" transition:slide={{ duration: 300 }}>
+										<span class="error-icon">⚠️</span>
+										<span class="error-text">{validationErrors.frequency}</span>
+									</div>
+								{/if}
+							</div>
+						</label>
 					</div>
-					<div class="timeline-visualization">
-						<div class="timeline-item">
-							<div class="timeline-dot"></div>
-							<div class="timeline-content">
-								<span class="timeline-label">Next watering</span>
-								<span class="timeline-time"
-									>Every {schedule.frequency}h for {schedule.duration}s</span
-								>
+
+					<div class="control-group">
+						<label class="control-label">
+							<span class="label-text">Duration (seconds)</span>
+							<div class="input-container">
+								<input
+									type="number"
+									min="5"
+									max="300"
+									bind:value={schedule.duration}
+									on:input={handleDurationChange}
+									class="modern-input {validationErrors.duration ? 'error' : ''}"
+									class:shake={validationErrors.duration}
+								/>
+								<div class="input-accent"></div>
+								{#if validationErrors.duration}
+									<div class="error-message" transition:slide={{ duration: 300 }}>
+										<span class="error-icon">⚠️</span>
+										<span class="error-text">{validationErrors.duration}</span>
+									</div>
+								{/if}
+							</div>
+						</label>
+					</div>
+
+					<!-- Schedule Preview -->
+					<div class="schedule-preview">
+						<div class="preview-header">
+							<span class="preview-title">Schedule Preview</span>
+						</div>
+						<div class="timeline-visualization">
+							<div class="timeline-item">
+								<div class="timeline-dot"></div>
+								<div class="timeline-content">
+									<span class="timeline-label">Next watering</span>
+									<span class="timeline-time"
+										>Every {schedule.frequency}h for {schedule.duration}s</span
+									>
+								</div>
 							</div>
 						</div>
 					</div>
 				</div>
-			</div>
-		{/if}
-	</div>
+			{/if}
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -666,10 +729,13 @@
 
 	.input-container {
 		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
 	}
 
 	.modern-input {
-		width: 100%;
+		flex: 1;
 		padding: 0.75rem 1rem;
 		border: 2px solid rgba(255, 255, 255, 0.3);
 		border-radius: 0.75rem;
@@ -1164,8 +1230,8 @@
 		}
 
 		.toggle-slider {
-			min-height: 44px;
-			min-width: 44px;
+			min-height: 24px;
+			min-width: 40px;
 		}
 
 		.modern-input {
@@ -1207,8 +1273,8 @@
 		}
 
 		.toggle-slider {
-			width: 2.5rem;
-			height: 1.5rem;
+			width: 22px;
+			height: 11px;
 		}
 
 		.toggle-thumb {
@@ -1323,6 +1389,236 @@
 		.section-badge:hover {
 			background: rgba(255, 255, 255, 0.3) !important;
 			transform: none !important;
+		}
+	}
+
+	/* Loading Skeleton Styles */
+	.loading-skeleton-container {
+		display: flex;
+		flex-direction: column;
+		gap: 2rem;
+		animation: skeleton-pulse 1.5s ease-in-out infinite;
+	}
+
+	.watering-button-skeleton {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+		padding: 2rem;
+	}
+
+	.skeleton-circle {
+		width: 200px;
+		height: 200px;
+		border-radius: 50%;
+		background: linear-gradient(
+			90deg,
+			rgba(255, 255, 255, 0.1) 25%,
+			rgba(255, 255, 255, 0.2) 50%,
+			rgba(255, 255, 255, 0.1) 75%
+		);
+		background-size: 200% 100%;
+		animation: skeleton-shimmer 2s infinite;
+		position: relative;
+		overflow: hidden;
+	}
+
+	.skeleton-text {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.skeleton-line {
+		height: 1rem;
+		border-radius: 0.5rem;
+		background: linear-gradient(
+			90deg,
+			rgba(255, 255, 255, 0.1) 25%,
+			rgba(255, 255, 255, 0.2) 50%,
+			rgba(255, 255, 255, 0.1) 75%
+		);
+		background-size: 200% 100%;
+		animation: skeleton-shimmer 2s infinite;
+	}
+
+	.skeleton-line-long {
+		width: 120px;
+	}
+
+	.skeleton-line-short {
+		width: 80px;
+	}
+
+	.schedule-skeleton {
+		background: rgba(255, 255, 255, 0.1);
+		backdrop-filter: blur(20px);
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		border-radius: 1rem;
+		padding: 1.5rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+
+	.skeleton-title {
+		height: 1.5rem;
+		width: 60%;
+		border-radius: 0.5rem;
+		background: linear-gradient(
+			90deg,
+			rgba(255, 255, 255, 0.1) 25%,
+			rgba(255, 255, 255, 0.2) 50%,
+			rgba(255, 255, 255, 0.1) 75%
+		);
+		background-size: 200% 100%;
+		animation: skeleton-shimmer 2s infinite;
+	}
+
+	.skeleton-toggle {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.skeleton-toggle-slider {
+		width: 3.5rem;
+		height: 2rem;
+		border-radius: 2rem;
+		background: linear-gradient(
+			90deg,
+			rgba(255, 255, 255, 0.1) 25%,
+			rgba(255, 255, 255, 0.2) 50%,
+			rgba(255, 255, 255, 0.1) 75%
+		);
+		background-size: 200% 100%;
+		animation: skeleton-shimmer 2s infinite;
+	}
+
+	.skeleton-toggle-label {
+		height: 1rem;
+		width: 150px;
+		border-radius: 0.5rem;
+		background: linear-gradient(
+			90deg,
+			rgba(255, 255, 255, 0.1) 25%,
+			rgba(255, 255, 255, 0.2) 50%,
+			rgba(255, 255, 255, 0.1) 75%
+		);
+		background-size: 200% 100%;
+		animation: skeleton-shimmer 2s infinite;
+	}
+
+	.skeleton-inputs {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+
+	.skeleton-input-group {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.skeleton-label {
+		height: 0.875rem;
+		width: 40%;
+		border-radius: 0.25rem;
+		background: linear-gradient(
+			90deg,
+			rgba(255, 255, 255, 0.1) 25%,
+			rgba(255, 255, 255, 0.2) 50%,
+			rgba(255, 255, 255, 0.1) 75%
+		);
+		background-size: 200% 100%;
+		animation: skeleton-shimmer 2s infinite;
+	}
+
+	.skeleton-input {
+		height: 3rem;
+		border-radius: 0.75rem;
+		background: linear-gradient(
+			90deg,
+			rgba(255, 255, 255, 0.1) 25%,
+			rgba(255, 255, 255, 0.2) 50%,
+			rgba(255, 255, 255, 0.1) 75%
+		);
+		background-size: 200% 100%;
+		animation: skeleton-shimmer 2s infinite;
+	}
+
+	.skeleton-preview {
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		border-radius: 0.75rem;
+		padding: 1rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.skeleton-preview-header {
+		height: 1rem;
+		width: 50%;
+		border-radius: 0.25rem;
+		background: linear-gradient(
+			90deg,
+			rgba(255, 255, 255, 0.1) 25%,
+			rgba(255, 255, 255, 0.2) 50%,
+			rgba(255, 255, 255, 0.1) 75%
+		);
+		background-size: 200% 100%;
+		animation: skeleton-shimmer 2s infinite;
+	}
+
+	.skeleton-preview-content {
+		height: 2rem;
+		border-radius: 0.5rem;
+		background: linear-gradient(
+			90deg,
+			rgba(255, 255, 255, 0.1) 25%,
+			rgba(255, 255, 255, 0.2) 50%,
+			rgba(255, 255, 255, 0.1) 75%
+		);
+		background-size: 200% 100%;
+		animation: skeleton-shimmer 2s infinite;
+	}
+
+	@keyframes skeleton-shimmer {
+		0% {
+			background-position: -200% 0;
+		}
+		100% {
+			background-position: 200% 0;
+		}
+	}
+
+	@keyframes skeleton-pulse {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.8;
+		}
+	}
+
+	/* Reduced motion support for skeleton */
+	@media (prefers-reduced-motion: reduce) {
+		.loading-skeleton-container,
+		.skeleton-circle,
+		.skeleton-line,
+		.skeleton-title,
+		.skeleton-toggle-slider,
+		.skeleton-toggle-label,
+		.skeleton-label,
+		.skeleton-input,
+		.skeleton-preview-header,
+		.skeleton-preview-content {
+			animation: none;
 		}
 	}
 </style>

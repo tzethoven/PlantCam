@@ -78,6 +78,7 @@
 		top: var(--drop-y);
 		width: var(--drop-size);
 		height: var(--drop-size);
+		border-radius: 50% !important; /* Ensure round shape */
 		opacity: 0;
 		animation:
 			dewdropCycle var(--cycle-duration) ease-in-out infinite var(--growth-delay),
@@ -87,12 +88,13 @@
 		transform: translateZ(0);
 		backface-visibility: hidden;
 		contain: layout style paint;
+		overflow: hidden; /* Ensure content doesn't overflow the round shape */
 	}
 
 	.dewdrop-inner {
 		width: 100%;
 		height: 100%;
-		border-radius: 50%;
+		border-radius: 50% !important; /* Ensure round shape */
 		background: radial-gradient(
 			circle at 30% 30%,
 			rgba(255, 255, 255, 0.9) 0%,
@@ -108,7 +110,7 @@
 			0 0 8px rgba(173, 216, 230, 0.3);
 		filter: blur(var(--drop-blur));
 		position: relative;
-		overflow: hidden;
+		overflow: hidden; /* Ensure content doesn't overflow the round shape */
 		/* Performance optimizations */
 		transform: translateZ(0);
 		backface-visibility: hidden;
