@@ -4,7 +4,7 @@
 	import SoilHumidityChart from '$lib/components/sensors/SoilHumidityChart.svelte';
 	import TemperatureChart from '$lib/components/sensors/TemperatureChart.svelte';
 	import HumidityChart from '$lib/components/sensors/HumidityChart.svelte';
-	import AnimatedNatureBackground from '$lib/components/background/AnimatedNatureBackground.svelte';
+
 	import StatsOverview from '$lib/components/stats/StatsOverview.svelte';
 	import UserMenu from '$lib/components/auth/UserMenu.svelte';
 	import { onMount, onDestroy } from 'svelte';
@@ -35,9 +35,6 @@
 		}
 	});
 </script>
-
-<!-- Animated nature background -->
-<AnimatedNatureBackground />
 
 <!-- Main Dashboard Container -->
 <div class="dashboard-container">
