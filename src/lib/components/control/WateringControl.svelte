@@ -7,7 +7,6 @@
 		errorActionFeedback,
 		triggerHapticFeedback
 	} from '$lib/utils/notifications';
-	import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
 
 	let isWatering = false;
 	let wateringProgress = 0;
@@ -30,8 +29,6 @@
 		duration: ''
 	};
 
-	let isFormValid = true;
-
 	// Validation functions
 	function validateFrequency(value: number): string {
 		if (!value || value < 1) {
@@ -53,19 +50,10 @@
 		return '';
 	}
 
-	function validateForm() {
-		validationErrors.frequency = validateFrequency(schedule.frequency);
-		validationErrors.duration = validateDuration(schedule.duration);
-
-		isFormValid = !validationErrors.frequency && !validationErrors.duration;
-		return isFormValid;
-	}
-
 	function handleFrequencyChange(event: Event) {
 		const target = event.target as HTMLInputElement;
 		schedule.frequency = parseInt(target.value) || 0;
 		validationErrors.frequency = validateFrequency(schedule.frequency);
-		isFormValid = !validationErrors.frequency && !validationErrors.duration;
 	}
 
 	function handleDurationChange(event: Event) {
@@ -73,7 +61,6 @@
 		schedule.duration = parseInt(target.value) || 0;
 		totalDuration = schedule.duration;
 		validationErrors.duration = validateDuration(schedule.duration);
-		isFormValid = !validationErrors.frequency && !validationErrors.duration;
 	}
 
 	async function fetchWateringStatus() {
@@ -206,11 +193,15 @@
 		}
 	}
 
-	function handleToggleClick() {
+	function handleInputFocus() {
 		triggerHapticFeedback('click');
 	}
 
-	function handleInputFocus() {
+	function handleInputBlur() {
+		triggerHapticFeedback('click');
+	}
+
+	function handleToggleChange() {
 		triggerHapticFeedback('click');
 	}
 
@@ -349,7 +340,14 @@
 			<!-- Toggle Switch -->
 			<div class="toggle-container">
 				<label class="toggle-switch">
-					<input type="checkbox" bind:checked={schedule.enabled} class="toggle-input" />
+					<input
+						type="checkbox"
+						bind:checked={schedule.enabled}
+						class="toggle-input"
+						on:change={handleToggleChange}
+						on:focus={handleInputFocus}
+						on:blur={handleInputBlur}
+					/>
 					<span class="toggle-slider">
 						<span class="toggle-thumb"></span>
 					</span>
@@ -370,6 +368,7 @@
 									bind:value={schedule.frequency}
 									on:input={handleFrequencyChange}
 									on:focus={handleInputFocus}
+									on:blur={handleInputBlur}
 									class="modern-input {validationErrors.frequency ? 'error' : ''}"
 									class:shake={validationErrors.frequency}
 								/>
@@ -394,6 +393,8 @@
 									max="300"
 									bind:value={schedule.duration}
 									on:input={handleDurationChange}
+									on:focus={handleInputFocus}
+									on:blur={handleInputBlur}
 									class="modern-input {validationErrors.duration ? 'error' : ''}"
 									class:shake={validationErrors.duration}
 								/>

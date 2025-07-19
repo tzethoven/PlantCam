@@ -1,15 +1,8 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import {
-		buttonClickFeedback,
-		triggerHapticFeedback,
-		showSuccess,
-		showError
-	} from '$lib/utils/notifications';
-	import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
+	import { triggerHapticFeedback, showSuccess, showError } from '$lib/utils/notifications';
 
 	let videoElement: HTMLVideoElement;
-	let websocket: WebSocket;
 	let isLoading = true;
 	let isConnected = false;
 	let streamError = false;

@@ -31,7 +31,7 @@
 			</div>
 			<div class="skeleton-chart-body">
 				<div class="skeleton-chart-bars">
-					{#each Array(8) as _, i}
+					{#each Array.from({ length: 8 }, (_, i) => i) as i (i)}
 						<div class="skeleton-bar" style="height: {Math.random() * 60 + 20}%"></div>
 					{/each}
 				</div>
@@ -42,7 +42,7 @@
 		<div class="skeleton-button" class:rounded></div>
 	{:else if variant === 'text'}
 		<div class="skeleton-text-block">
-			{#each Array(lines) as _, i}
+			{#each Array.from({ length: lines }, (_, i) => i) as i (i)}
 				<div
 					class="skeleton-line"
 					style="width: {i === lines - 1 ? Math.random() * 40 + 60 : 100}%"

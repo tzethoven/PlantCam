@@ -3,11 +3,21 @@
 	import Chart, { type EasingFunction } from 'chart.js/auto';
 	import { showError, triggerHapticFeedback } from '$lib/utils/notifications';
 	import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
+	import { smartDownsample, getOptimalTargetPoints } from '$lib/utils/chartDataProcessor';
 
 	let canvas: HTMLCanvasElement;
 	let chart: Chart;
 	let isLoading = true;
 	let hasError = false;
+	let isDownsampled = false;
+	let downsampledData: Array<{
+		timestamp: number;
+		value: number;
+		min: number;
+		max: number;
+		avg: number;
+		count: number;
+	}> = [];
 
 	// Soil moisture zones
 	const SOIL_ZONES = {
@@ -18,15 +28,39 @@
 	};
 
 	// Enhanced mock data with more realistic soil moisture patterns
-	const labels = ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30'];
-	const data = [45, 42, 38, 35, 32, 28, 25, 22]; // Gradual decrease showing need for watering
+	// In a real implementation, this would come from a soil moisture sensor
+	let soilData: Array<{ timestamp: number; moisture: number }> = [];
+
+	// Generate realistic mock data for development
+	function generateMockSoilData() {
+		const now = Date.now();
+		const dataPoints = 50; // Generate 50 data points
+		const interval = 5 * 60 * 1000; // 5 minutes between readings
+
+		soilData = [];
+		for (let i = dataPoints - 1; i >= 0; i--) {
+			const timestamp = now - i * interval;
+			// Create realistic soil moisture pattern with gradual decrease and some variation
+			const baseMoisture = 45;
+			const timeFactor = Math.sin((i / dataPoints) * Math.PI) * 10; // Gradual decrease
+			const noise = (Math.random() - 0.5) * 5; // Random variation
+			const moisture = Math.max(10, Math.min(70, baseMoisture + timeFactor + noise));
+
+			soilData.push({
+				timestamp,
+				moisture: Math.round(moisture * 10) / 10
+			});
+		}
+	}
 
 	async function fetchData() {
 		try {
 			isLoading = true;
 			hasError = false;
-			// Simulate API call for soil moisture data
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+
+			// Generate mock soil moisture data for development
+			// In production, this would fetch from a real soil moisture sensor
+			generateMockSoilData();
 
 			updateChart();
 			isLoading = false;
@@ -46,7 +80,10 @@
 		return 'critical';
 	}
 
-	function createEarthGradient(ctx: CanvasRenderingContext2D, chartArea: any) {
+	function createEarthGradient(
+		ctx: CanvasRenderingContext2D,
+		chartArea: { top: number; bottom: number }
+	) {
 		const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
 		gradient.addColorStop(0, 'rgba(120, 53, 15, 0.2)'); // Dark brown (dry soil)
 		gradient.addColorStop(0.3, 'rgba(146, 64, 14, 0.3)'); // Medium brown
@@ -55,7 +92,10 @@
 		return gradient;
 	}
 
-	function createEarthBorderGradient(ctx: CanvasRenderingContext2D, chartArea: any) {
+	function createEarthBorderGradient(
+		ctx: CanvasRenderingContext2D,
+		chartArea: { top: number; bottom: number }
+	) {
 		const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
 		gradient.addColorStop(0, '#92400e'); // Brown
 		gradient.addColorStop(0.5, '#65a30d'); // Olive
@@ -64,10 +104,36 @@
 	}
 
 	function updateChart() {
-		if (chart && chart.ctx && data.length) {
+		if (chart && chart.ctx && soilData.length) {
 			const ctx = chart.ctx;
 			const chartArea = chart.chartArea;
 
+			// Determine optimal number of points based on screen size
+			const isMobile = window.innerWidth <= 480;
+			const targetPoints = getOptimalTargetPoints(soilData.length, isMobile);
+
+			// Apply smart downsampling to preserve trends and anomalies
+			// Convert soil data to the format expected by the downsampling function
+			const sensorDataFormat = soilData.map((d) => ({
+				timestamp: d.timestamp,
+				temperature: 0, // Not used for soil moisture
+				humidity: d.moisture // Use humidity field for moisture data
+			}));
+
+			downsampledData = smartDownsample(sensorDataFormat, targetPoints, 'humidity');
+
+			// Check if data was downsampled
+			isDownsampled = downsampledData.length < soilData.length;
+
+			chart.data.labels = downsampledData.map((d) =>
+				new Date(d.timestamp).toLocaleTimeString([], {
+					hour: '2-digit',
+					minute: '2-digit',
+					hourCycle: 'h23'
+				})
+			);
+
+			chart.data.datasets[0].data = downsampledData.map((d) => d.value);
 			chart.data.datasets[0].backgroundColor = createEarthGradient(ctx, chartArea);
 			chart.data.datasets[0].borderColor = createEarthBorderGradient(ctx, chartArea);
 
@@ -97,6 +163,11 @@
 		};
 	}
 
+	function handleRetryClick() {
+		triggerHapticFeedback('click');
+		fetchData();
+	}
+
 	onMount(() => {
 		fetchData();
 		const interval = setInterval(fetchData, 30_000);
@@ -108,10 +179,12 @@
 		};
 	});
 
-	$: moistureStatus = getSoilMoistureStatus(data[data.length - 1]);
-	$: isLowMoisture = data[data.length - 1] < 30;
+	$: moistureStatus = getSoilMoistureStatus(
+		soilData.length > 0 ? soilData[soilData.length - 1].moisture : 0
+	);
+	$: isLowMoisture = soilData.length > 0 ? soilData[soilData.length - 1].moisture < 30 : false;
 
-	$: if (chart && chart.ctx && data.length && !isLoading) {
+	$: if (chart && chart.ctx && soilData.length && !isLoading) {
 		updateChart();
 	}
 
@@ -122,11 +195,11 @@
 		chart = new Chart(canvas, {
 			type: 'line',
 			data: {
-				labels,
+				labels: [],
 				datasets: [
 					{
 						label: 'Soil Moisture (%)',
-						data,
+						data: [],
 						borderColor: '#65a30d',
 						backgroundColor: 'rgba(101, 163, 13, 0.3)',
 						fill: true,
@@ -165,7 +238,14 @@
 								size: config.legendFontSize,
 								weight: 500
 							},
-							color: '#374151'
+							color: '#374151',
+							generateLabels: function (chart) {
+								const defaultLabels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+								if (isDownsampled && defaultLabels.length > 0) {
+									defaultLabels[0].text = `Soil Moisture (%) (${downsampledData.length}/${soilData.length} points)`;
+								}
+								return defaultLabels;
+							}
 						}
 					},
 					tooltip: {
@@ -200,6 +280,18 @@
 											: status === 'dry'
 												? '🏜️'
 												: '⚠️';
+
+								// Get the downsampled data point to show range information
+								const dataPoint = downsampledData[context.dataIndex];
+
+								if (dataPoint && dataPoint.count > 1) {
+									return [
+										`${statusEmoji} ${moisture}% (${status})`,
+										`Range: ${dataPoint.min.toFixed(1)}% - ${dataPoint.max.toFixed(1)}%`,
+										`Avg: ${dataPoint.avg.toFixed(1)}% (${dataPoint.count} readings)`
+									];
+								}
+
 								return `${statusEmoji} ${moisture}% (${status})`;
 							}
 						}
@@ -265,7 +357,7 @@
 						const yScale = chart.scales.y;
 
 						// Draw soil moisture zones
-						Object.entries(SOIL_ZONES).forEach(([zone, config]) => {
+						Object.entries(SOIL_ZONES).forEach(([, config]) => {
 							const yTop = yScale.getPixelForValue(config.max);
 							const yBottom = yScale.getPixelForValue(config.min);
 
@@ -312,7 +404,7 @@
 		<div class="error-state">
 			<div class="error-icon">🌱</div>
 			<p class="error-text">Failed to load soil moisture data</p>
-			<button class="retry-button" on:click={fetchData}> Retry </button>
+			<button class="retry-button" on:click={handleRetryClick}> Retry </button>
 		</div>
 	{:else}
 		<div class="chart-wrapper">
@@ -333,7 +425,9 @@
 				{/if}
 			</div>
 			<div class="status-text">
-				<span class="moisture-value">{data[data.length - 1]}%</span>
+				<span class="moisture-value"
+					>{soilData.length > 0 ? soilData[soilData.length - 1].moisture : 0}%</span
+				>
 				<span class="moisture-label">{moistureStatus}</span>
 			</div>
 		</div>

@@ -1,51 +1,77 @@
-import { MockGpio } from './mock-gpio';
+import { spawn } from 'child_process';
+import type { WateringConfig } from './types';
 
-// GPIO pin number for the water pump
-const WATER_PIN = 18;
+let isWatering = false;
+let wateringTimeout: NodeJS.Timeout | null = null;
 
-// Determine if we're running on a Raspberry Pi by checking for GPIO directory
-const isRaspberryPi = () => {
-	try {
-		// Check if running on Raspberry Pi by looking for GPIO directory
-		return process.platform === 'linux' && require('fs').existsSync('/sys/class/gpio');
-	} catch {
+const DEFAULT_CONFIG: WateringConfig = {
+	relayPin: 17,
+	duration: 30,
+	interval: 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+};
+
+export function getWateringStatus(): boolean {
+	return isWatering;
+}
+
+export function startWatering(config: Partial<WateringConfig> = {}): boolean {
+	if (isWatering) {
+		console.log('Watering already in progress');
 		return false;
 	}
-};
 
-// Initialize GPIO or MockGpio based on platform
-const initializeGpio = async () => {
-	if (isRaspberryPi()) {
-		try {
-			const { Gpio } = await import('onoff');
-			return new Gpio(WATER_PIN, 'out');
-		} catch (error) {
-			console.error('Failed to initialize GPIO:', error);
-			return new MockGpio(WATER_PIN, 'out');
-		}
-	}
-	return new MockGpio(WATER_PIN, 'out');
-};
+	const finalConfig = { ...DEFAULT_CONFIG, ...config };
 
-// Initialize the pump controller
-let waterPump = new MockGpio(WATER_PIN, 'out');
-initializeGpio().then((gpio) => {
-	waterPump = gpio;
-});
-
-export async function toggleWatering(state: boolean) {
 	try {
-		await waterPump.write(state ? 1 : 0);
+		// Use gpio command to control relay
+		spawn('gpio', ['-g', 'mode', finalConfig.relayPin.toString(), 'out']);
+		spawn('gpio', ['-g', 'write', finalConfig.relayPin.toString(), '1']);
+
+		isWatering = true;
+		console.log(`Watering started for ${finalConfig.duration} seconds`);
+
+		// Set timeout to stop watering
+		wateringTimeout = setTimeout(() => {
+			stopWatering();
+		}, finalConfig.duration * 1000);
+
 		return true;
 	} catch (error) {
-		console.error('Failed to control water pump:', error);
+		console.error('Failed to start watering:', error);
 		return false;
 	}
 }
 
-// Clean up GPIO on process exit
-if (typeof process !== 'undefined') {
-	process.on('SIGINT', () => {
-		waterPump.unexport();
-	});
+export function stopWatering(): boolean {
+	if (!isWatering) {
+		console.log('No watering in progress');
+		return false;
+	}
+
+	try {
+		// Turn off relay
+		spawn('gpio', ['-g', 'write', DEFAULT_CONFIG.relayPin.toString(), '0']);
+
+		isWatering = false;
+		console.log('Watering stopped');
+
+		// Clear timeout if it exists
+		if (wateringTimeout) {
+			clearTimeout(wateringTimeout);
+			wateringTimeout = null;
+		}
+
+		return true;
+	} catch (error) {
+		console.error('Failed to stop watering:', error);
+		return false;
+	}
+}
+
+export async function toggleWatering(state: boolean): Promise<boolean> {
+	if (state) {
+		return startWatering();
+	} else {
+		return stopWatering();
+	}
 }

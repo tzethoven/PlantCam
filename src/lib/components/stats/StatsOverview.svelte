@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { tweened } from 'svelte/motion';
+	import { writable } from 'svelte/store';
 	import { cubicOut } from 'svelte/easing';
 	import { showError, triggerHapticFeedback } from '$lib/utils/notifications';
 	import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
@@ -31,24 +31,55 @@
 	let lastUpdate = Date.now();
 	let isLoading = true;
 	let hasError = false;
+	let temperatureStat: StatData;
+	let humidityStat: StatData;
+	let soilMoistureStat: StatData;
+	let systemHealthStat: StatData;
 
-	// Animated values using tweened stores
-	const temperatureValue = tweened(0, { duration: 1000, easing: cubicOut });
-	const humidityValue = tweened(0, { duration: 1000, easing: cubicOut });
-	const soilMoistureValue = tweened(0, { duration: 1000, easing: cubicOut });
-	const systemHealthValue = tweened(0, { duration: 1000, easing: cubicOut });
+	// Animated values using writable stores with manual animation
+	const temperatureValue = writable(0);
+	const humidityValue = writable(0);
+	const soilMoistureValue = writable(0);
+	const systemHealthValue = writable(0);
+
+	// Simple animation function to replace deprecated tweened
+	function animateValue(
+		store: { subscribe: (fn: (value: number) => void) => () => void; set: (value: number) => void },
+		targetValue: number,
+		duration: number = 500
+	) {
+		const startTime = Date.now();
+		let startValue = 0;
+
+		// Get current value from store
+		store.subscribe((value: number) => {
+			startValue = value;
+		})();
+
+		const change = targetValue - startValue;
+
+		function update() {
+			const elapsed = Date.now() - startTime;
+			const progress = Math.min(elapsed / duration, 1);
+			const easedProgress = cubicOut(progress);
+			const currentValue = startValue + change * easedProgress;
+
+			store.set(currentValue);
+
+			if (progress < 1) {
+				requestAnimationFrame(update);
+			}
+		}
+
+		requestAnimationFrame(update);
+	}
 
 	// Computed stats
+
 	$: temperatureStat = calculateStat(sensorData, 'temperature');
 	$: humidityStat = calculateStat(sensorData, 'humidity');
-	$: soilMoistureStat = calculateSoilMoistureStat();
-	$: systemHealthStat = calculateSystemHealthStat();
-
-	// Update animated values when stats change
-	$: if (temperatureStat) temperatureValue.set(temperatureStat.value);
-	$: if (humidityStat) humidityValue.set(humidityStat.value);
-	$: if (soilMoistureStat) soilMoistureValue.set(soilMoistureStat.value);
-	$: if (systemHealthStat) systemHealthValue.set(systemHealthStat.value);
+	soilMoistureStat = calculateSoilMoistureStat();
+	systemHealthStat = calculateSystemHealthStat();
 
 	function calculateStat(data: SensorReading[], field: 'temperature' | 'humidity'): StatData {
 		if (data.length === 0) {
@@ -113,6 +144,12 @@
 				sensorData = await response.json();
 				lastUpdate = Date.now();
 				isLoading = false;
+
+				// Animate values to new data
+				if (sensorData.length > 0) {
+					animateValue(temperatureValue, sensorData[sensorData.length - 1].temperature);
+					animateValue(humidityValue, sensorData[sensorData.length - 1].humidity);
+				}
 			} else {
 				throw new Error(`HTTP error! status: ${response.status}`);
 			}
@@ -129,12 +166,18 @@
 			// Mock watering status for development
 			if (process.env.NODE_ENV === 'development') {
 				wateringStatus = { success: true, isWatering: wateringStatus.isWatering };
+				// Animate system health values
+				animateValue(soilMoistureValue, soilMoistureStat?.value || 0);
+				animateValue(systemHealthValue, systemHealthStat?.value || 0);
 				return;
 			}
 
 			const response = await fetch('/api/water/status');
 			if (response.ok) {
 				wateringStatus = await response.json();
+				// Animate system health values
+				animateValue(soilMoistureValue, soilMoistureStat?.value || 0);
+				animateValue(systemHealthValue, systemHealthStat?.value || 0);
 			} else {
 				throw new Error(`HTTP error! status: ${response.status}`);
 			}
@@ -198,6 +241,12 @@
 			fetchWateringStatus();
 		}, 30000);
 
+		// Initialize animated values with current stats
+		animateValue(temperatureValue, temperatureStat?.value || 0);
+		animateValue(humidityValue, humidityStat?.value || 0);
+		animateValue(soilMoistureValue, soilMoistureStat?.value || 0);
+		animateValue(systemHealthValue, systemHealthStat?.value || 0);
+
 		return () => clearInterval(interval);
 	});
 </script>
@@ -222,6 +271,7 @@
 			class="stat-card temperature-card"
 			data-status={temperatureStat?.status}
 			on:click={handleCardClick}
+			on:keydown={(e) => (e.key === 'Enter' || e.key === ' ' ? handleCardClick() : null)}
 			role="button"
 			tabindex="0"
 		>
@@ -251,7 +301,7 @@
 					</div>
 				</div>
 				<div class="stat-meta">
-					<h3 class="stat-title">Temperature</h3>
+					<h3 class="stat-title" title="Temperature">🌡️ Temp</h3>
 					<p class="stat-subtitle">Current Reading</p>
 				</div>
 			</div>
@@ -555,16 +605,23 @@
 	}
 
 	.stat-title {
-		font-size: 1rem;
+		font-size: 1.125rem;
 		font-weight: 600;
-		color: #1f2937;
-		margin: 0 0 0.25rem 0;
+		color: var(--text-primary);
+		margin: 0;
+		line-height: 1.2;
+		/* Handle long titles */
+		word-wrap: break-word;
+		overflow-wrap: break-word;
+		hyphens: auto;
+		max-width: 100%;
 	}
 
 	.stat-subtitle {
-		font-size: 0.75rem;
-		color: #64748b;
-		margin: 0;
+		font-size: 0.875rem;
+		color: var(--text-secondary);
+		margin: 0.25rem 0 0 0;
+		opacity: 0.8;
 	}
 
 	.status-indicator {

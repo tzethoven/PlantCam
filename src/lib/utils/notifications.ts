@@ -39,7 +39,11 @@ function playTone(frequency: number, duration: number, type: OscillatorType = 's
 	if (typeof window === 'undefined' || !window.AudioContext) return;
 
 	try {
-		const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+		// Use AudioContext with fallback for webkit
+		const AudioContextClass =
+			window.AudioContext ||
+			(window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+		const audioContext = new AudioContextClass();
 		const oscillator = audioContext.createOscillator();
 		const gainNode = audioContext.createGain();
 
@@ -240,6 +244,10 @@ export function supportsHapticFeedback(): boolean {
  */
 export function supportsAudio(): boolean {
 	return (
-		typeof window !== 'undefined' && (window.AudioContext || (window as any).webkitAudioContext)
+		typeof window !== 'undefined' &&
+		!!(
+			window.AudioContext ||
+			(window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+		)
 	);
 }

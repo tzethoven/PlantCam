@@ -4,12 +4,22 @@
 	import type { SensorReading } from '$lib/server/sensorData';
 	import { showError, triggerHapticFeedback } from '$lib/utils/notifications';
 	import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
+	import { smartDownsample, getOptimalTargetPoints } from '$lib/utils/chartDataProcessor';
 
 	let data: SensorReading[] = [];
 	let canvas: HTMLCanvasElement;
 	let chart: Chart;
 	let isLoading = true;
 	let hasError = false;
+	let isDownsampled = false;
+	let downsampledData: Array<{
+		timestamp: number;
+		value: number;
+		min: number;
+		max: number;
+		avg: number;
+		count: number;
+	}> = [];
 
 	// Temperature zone definitions
 	const TEMP_ZONES = {
@@ -45,7 +55,10 @@
 		return 'critical';
 	}
 
-	function createGradient(ctx: CanvasRenderingContext2D, chartArea: any) {
+	function createGradient(
+		ctx: CanvasRenderingContext2D,
+		chartArea: { top: number; bottom: number }
+	) {
 		const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
 		gradient.addColorStop(0, 'rgba(251, 113, 133, 0.1)'); // Light red-pink
 		gradient.addColorStop(0.5, 'rgba(249, 115, 22, 0.3)'); // Orange
@@ -53,7 +66,10 @@
 		return gradient;
 	}
 
-	function createBorderGradient(ctx: CanvasRenderingContext2D, chartArea: any) {
+	function createBorderGradient(
+		ctx: CanvasRenderingContext2D,
+		chartArea: { top: number; bottom: number }
+	) {
 		const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
 		gradient.addColorStop(0, '#f87171'); // Light red
 		gradient.addColorStop(0.5, '#f97316'); // Orange
@@ -66,7 +82,17 @@
 			const ctx = chart.ctx;
 			const chartArea = chart.chartArea;
 
-			chart.data.labels = data.map((d) =>
+			// Determine optimal number of points based on screen size
+			const isMobile = window.innerWidth <= 480;
+			const targetPoints = getOptimalTargetPoints(data.length, isMobile);
+
+			// Apply smart downsampling to preserve trends and anomalies
+			downsampledData = smartDownsample(data, targetPoints, 'temperature');
+
+			// Check if data was downsampled
+			isDownsampled = downsampledData.length < data.length;
+
+			chart.data.labels = downsampledData.map((d) =>
 				new Date(d.timestamp).toLocaleTimeString([], {
 					hour: '2-digit',
 					minute: '2-digit',
@@ -74,7 +100,7 @@
 				})
 			);
 
-			chart.data.datasets[0].data = data.map((d) => d.temperature);
+			chart.data.datasets[0].data = downsampledData.map((d) => d.value);
 			chart.data.datasets[0].backgroundColor = createGradient(ctx, chartArea);
 			chart.data.datasets[0].borderColor = createBorderGradient(ctx, chartArea);
 
@@ -102,6 +128,11 @@
 			animationDuration: prefersReducedMotion ? 0 : isMobile ? 600 : 1000,
 			animationEasing: (prefersReducedMotion ? 'linear' : 'easeInOutCubic') as EasingFunction
 		};
+	}
+
+	function handleRetryClick() {
+		triggerHapticFeedback('click');
+		fetchData();
 	}
 
 	onMount(() => {
@@ -169,7 +200,14 @@
 								size: config.legendFontSize,
 								weight: 500
 							},
-							color: '#374151'
+							color: '#374151',
+							generateLabels: function (chart) {
+								const defaultLabels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+								if (isDownsampled && defaultLabels.length > 0) {
+									defaultLabels[0].text = `Temperature (°C) (${downsampledData.length}/${data.length} points)`;
+								}
+								return defaultLabels;
+							}
 						}
 					},
 					tooltip: {
@@ -198,6 +236,23 @@
 								const status = getTemperatureStatus(temp);
 								const statusEmoji =
 									status === 'optimal' ? '✅' : status === 'warning' ? '⚠️' : '🔥';
+
+								// Get the downsampled data point to show range information
+								const downsampledData = smartDownsample(
+									data,
+									getOptimalTargetPoints(data.length, window.innerWidth <= 480),
+									'temperature'
+								);
+								const dataPoint = downsampledData[context.dataIndex];
+
+								if (dataPoint && dataPoint.count > 1) {
+									return [
+										`${statusEmoji} ${temp}°C (${status})`,
+										`Range: ${dataPoint.min.toFixed(1)}°C - ${dataPoint.max.toFixed(1)}°C`,
+										`Avg: ${dataPoint.avg.toFixed(1)}°C (${dataPoint.count} readings)`
+									];
+								}
+
 								return `${statusEmoji} ${temp}°C (${status})`;
 							}
 						}
@@ -263,7 +318,7 @@
 						const yScale = chart.scales.y;
 
 						// Draw temperature zones
-						Object.entries(TEMP_ZONES).forEach(([zone, config]) => {
+						Object.entries(TEMP_ZONES).forEach(([, config]) => {
 							const yTop = yScale.getPixelForValue(config.max);
 							const yBottom = yScale.getPixelForValue(config.min);
 
@@ -286,7 +341,7 @@
 		<div class="error-state">
 			<div class="error-icon">🌡️</div>
 			<p class="error-text">Failed to load temperature data</p>
-			<button class="retry-button" on:click={fetchData}> Retry </button>
+			<button class="retry-button" on:click={handleRetryClick}> Retry </button>
 		</div>
 	{:else}
 		<div class="chart-wrapper">

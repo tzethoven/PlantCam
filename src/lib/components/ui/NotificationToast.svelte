@@ -67,6 +67,7 @@
 		setTimeout(() => {
 			dispatch('dismiss');
 		}, 300); // Wait for exit animation
+		triggerHapticFeedback();
 	}
 
 	function clearTimers() {

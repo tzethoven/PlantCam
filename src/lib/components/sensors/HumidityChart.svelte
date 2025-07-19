@@ -4,12 +4,22 @@
 	import type { SensorReading } from '$lib/server/sensorData';
 	import { showError, triggerHapticFeedback } from '$lib/utils/notifications';
 	import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
+	import { smartDownsample, getOptimalTargetPoints } from '$lib/utils/chartDataProcessor';
 
 	let data: SensorReading[] = [];
 	let canvas: HTMLCanvasElement;
 	let chart: Chart;
 	let isLoading = true;
 	let hasError = false;
+	let isDownsampled = false;
+	let downsampledData: Array<{
+		timestamp: number;
+		value: number;
+		min: number;
+		max: number;
+		avg: number;
+		count: number;
+	}> = [];
 
 	// Humidity comfort zones
 	const HUMIDITY_ZONES = {
@@ -49,7 +59,10 @@
 		return 'humid';
 	}
 
-	function createWaterGradient(ctx: CanvasRenderingContext2D, chartArea: any) {
+	function createWaterGradient(
+		ctx: CanvasRenderingContext2D,
+		chartArea: { top: number; bottom: number }
+	) {
 		const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
 		gradient.addColorStop(0, 'rgba(56, 189, 248, 0.1)'); // Light blue
 		gradient.addColorStop(0.3, 'rgba(14, 165, 233, 0.3)'); // Sky blue
@@ -58,7 +71,10 @@
 		return gradient;
 	}
 
-	function createWaterBorderGradient(ctx: CanvasRenderingContext2D, chartArea: any) {
+	function createWaterBorderGradient(
+		ctx: CanvasRenderingContext2D,
+		chartArea: { top: number; bottom: number }
+	) {
 		const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
 		gradient.addColorStop(0, '#38bdf8'); // Light blue
 		gradient.addColorStop(0.5, '#0ea5e9'); // Sky blue
@@ -71,7 +87,17 @@
 			const ctx = chart.ctx;
 			const chartArea = chart.chartArea;
 
-			chart.data.labels = data.map((d) =>
+			// Determine optimal number of points based on screen size
+			const isMobile = window.innerWidth <= 480;
+			const targetPoints = getOptimalTargetPoints(data.length, isMobile);
+
+			// Apply smart downsampling to preserve trends and anomalies
+			downsampledData = smartDownsample(data, targetPoints, 'humidity');
+
+			// Check if data was downsampled
+			isDownsampled = downsampledData.length < data.length;
+
+			chart.data.labels = downsampledData.map((d) =>
 				new Date(d.timestamp).toLocaleTimeString([], {
 					hour: '2-digit',
 					minute: '2-digit',
@@ -79,7 +105,7 @@
 				})
 			);
 
-			chart.data.datasets[0].data = data.map((d) => d.humidity);
+			chart.data.datasets[0].data = downsampledData.map((d) => d.value);
 			chart.data.datasets[0].backgroundColor = createWaterGradient(ctx, chartArea);
 			chart.data.datasets[0].borderColor = createWaterBorderGradient(ctx, chartArea);
 
@@ -107,6 +133,11 @@
 			animationDuration: prefersReducedMotion ? 0 : isMobile ? 800 : 1500,
 			animationEasing: (prefersReducedMotion ? 'linear' : 'easeInOutSine') as EasingFunction
 		};
+	}
+
+	function handleRetryClick() {
+		triggerHapticFeedback('click');
+		fetchData();
 	}
 
 	onMount(() => {
@@ -174,7 +205,14 @@
 								size: config.legendFontSize,
 								weight: 500
 							},
-							color: '#374151'
+							color: '#374151',
+							generateLabels: function (chart) {
+								const defaultLabels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+								if (isDownsampled && defaultLabels.length > 0) {
+									defaultLabels[0].text = `Air Humidity (%) (${downsampledData.length}/${data.length} points)`;
+								}
+								return defaultLabels;
+							}
 						}
 					},
 					tooltip: {
@@ -209,6 +247,23 @@
 											: status === 'dry'
 												? '🏜️'
 												: '🌊';
+
+								// Get the downsampled data point to show range information
+								const downsampledData = smartDownsample(
+									data,
+									getOptimalTargetPoints(data.length, window.innerWidth <= 480),
+									'humidity'
+								);
+								const dataPoint = downsampledData[context.dataIndex];
+
+								if (dataPoint && dataPoint.count > 1) {
+									return [
+										`${statusEmoji} ${humidity}% (${status})`,
+										`Range: ${dataPoint.min.toFixed(1)}% - ${dataPoint.max.toFixed(1)}%`,
+										`Avg: ${dataPoint.avg.toFixed(1)}% (${dataPoint.count} readings)`
+									];
+								}
+
 								return `${statusEmoji} ${humidity}% (${status})`;
 							}
 						}
@@ -274,7 +329,7 @@
 						const yScale = chart.scales.y;
 
 						// Draw humidity comfort zones
-						Object.entries(HUMIDITY_ZONES).forEach(([zone, config]) => {
+						Object.entries(HUMIDITY_ZONES).forEach(([, config]) => {
 							const yTop = yScale.getPixelForValue(config.max);
 							const yBottom = yScale.getPixelForValue(config.min);
 
@@ -334,7 +389,7 @@
 		<div class="error-state">
 			<div class="error-icon">💧</div>
 			<p class="error-text">Failed to load humidity data</p>
-			<button class="retry-button" on:click={fetchData}> Retry </button>
+			<button class="retry-button" on:click={handleRetryClick}> Retry </button>
 		</div>
 	{:else}
 		<div class="chart-wrapper">

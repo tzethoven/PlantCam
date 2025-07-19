@@ -1,4 +1,5 @@
 import dht from 'node-dht-sensor';
+import mockSensorData from './data/mockSensorData.json';
 
 if (process.env.NODE_ENV === 'development') {
 	dht.initialize({ test: { fake: { temperature: 20, humidity: 40 } } });
@@ -28,5 +29,9 @@ if (!process.env.BUILDING) {
 }
 
 export function getReadings() {
-	return readings;
+	if (process.env.NODE_ENV === 'development') {
+		return mockSensorData;
+	} else {
+		return readings;
+	}
 }

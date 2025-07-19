@@ -322,33 +322,6 @@
 		filter: drop-shadow(0 4px 8px rgba(34, 197, 94, 0.3));
 	}
 
-	/* Loading state for sections */
-	.section-loading {
-		position: relative;
-		overflow: hidden;
-	}
-
-	.section-loading::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: -100%;
-		width: 100%;
-		height: 100%;
-		background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-		animation: section-loading 2s infinite;
-		z-index: 1;
-	}
-
-	@keyframes section-loading {
-		0% {
-			left: -100%;
-		}
-		100% {
-			left: 100%;
-		}
-	}
-
 	.chart-icon {
 		font-size: 1.5rem;
 		opacity: 0.7;
@@ -496,13 +469,6 @@
 			border-radius: 1.5rem;
 		}
 
-		.glass-button {
-			padding: 0.75rem 1.5rem;
-			min-height: 44px;
-			font-size: 1rem;
-			border-radius: 0.75rem;
-		}
-
 		/* Tablet-specific section headers */
 		.section-header {
 			margin-bottom: 1.25rem;
@@ -589,12 +555,6 @@
 			font-size: 0.875rem;
 		}
 
-		.glass-button {
-			padding: 0.875rem 1.5rem;
-			min-height: 48px;
-			font-size: 1rem;
-		}
-
 		/* Optimize section headers for tablet */
 		.section-header {
 			margin-bottom: 1.25rem;
@@ -672,14 +632,6 @@
 			padding: 0.5rem 1rem;
 			min-height: 40px;
 			font-size: 0.75rem;
-		}
-
-		/* Enhanced mobile touch targets */
-		.glass-button {
-			padding: 1rem 1.5rem;
-			min-height: 48px;
-			font-size: 1rem;
-			border-radius: 0.75rem;
 		}
 
 		/* Optimize chart icons for mobile */
@@ -817,7 +769,6 @@
 		.dashboard-header {
 			padding: 1rem;
 			background: rgba(255, 255, 255, 0.1);
-			backdrop-filter: blur(10px);
 			margin: 0 0.5rem 1rem 0.5rem;
 			border-radius: 1rem;
 			border: 1px solid rgba(255, 255, 255, 0.2);

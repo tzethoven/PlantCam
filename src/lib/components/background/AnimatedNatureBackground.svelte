@@ -42,7 +42,7 @@
 		{/if}
 		{#if enableLeaves}
 			<div class="static-leaves">
-				{#each Array(Math.min(leafCount, 6)) as _, i}
+				{#each Array.from({ length: Math.min(leafCount, 6) }, (_, i) => i) as i (i)}
 					<div class="static-leaf static-leaf-{i + 1}">
 						<svg width="20" height="20" viewBox="0 0 24 24" fill="none">
 							<path
@@ -57,7 +57,7 @@
 		{/if}
 		{#if enableDewdrops}
 			<div class="static-dewdrops">
-				{#each Array(Math.min(dropCount, 4)) as _, i}
+				{#each Array.from({ length: Math.min(dropCount, 4) }, (_, i) => i) as i (i)}
 					<div class="static-dewdrop static-dewdrop-{i + 1}" />
 				{/each}
 			</div>
