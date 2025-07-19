@@ -1,8 +1,12 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { startWatering, stopWatering, getWateringStatus } from '$lib/server/relayControl';
+import { requireAuth } from '$lib/server/auth';
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {
+		// Check for authenticated session
+		await requireAuth(request.headers);
+
 		if (process.env.NODE_ENV === 'development') {
 			return new Response(
 				JSON.stringify({

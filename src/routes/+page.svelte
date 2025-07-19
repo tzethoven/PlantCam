@@ -6,6 +6,7 @@
 	import HumidityChart from '$lib/components/sensors/HumidityChart.svelte';
 	import AnimatedNatureBackground from '$lib/components/background/AnimatedNatureBackground.svelte';
 	import StatsOverview from '$lib/components/stats/StatsOverview.svelte';
+	import UserMenu from '$lib/components/auth/UserMenu.svelte';
 	import { onMount, onDestroy } from 'svelte';
 	import { setupIntersectionObserver } from '$lib/utils/intersectionObserver';
 
@@ -42,8 +43,15 @@
 <div class="dashboard-container">
 	<!-- Header Section -->
 	<header class="dashboard-header animate-entrance" class:mounted>
-		<h1 class="text-display text-gradient-nature">PlantCam</h1>
-		<p class="text-body-large text-gray-600">Monitor and care for your plants with style</p>
+		<div class="header-content">
+			<div class="header-text">
+				<h1 class="text-display text-gradient-nature">PlantCam</h1>
+				<p class="text-body-large text-gray-600">Monitor and care for your plants with style</p>
+			</div>
+			<div class="header-actions">
+				<UserMenu />
+			</div>
+		</div>
 	</header>
 
 	<!-- Stats Overview Cards -->
@@ -134,10 +142,26 @@
 	}
 
 	.dashboard-header {
-		text-align: center;
 		padding: 2rem 0;
 		max-width: 1000px;
 		margin: 0 auto;
+	}
+
+	.header-content {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 1rem;
+	}
+
+	.header-text {
+		text-align: left;
+		flex: 1;
+	}
+
+	.header-actions {
+		flex-shrink: 0;
 	}
 
 	.dashboard-header h1 {

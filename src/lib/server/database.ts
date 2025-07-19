@@ -5,7 +5,7 @@ import { join } from 'path';
 const dbPath = join(process.cwd(), 'plantcam.db');
 
 // Initialize database
-const db = new Database(dbPath);
+export const db = new Database(dbPath);
 
 // Enable WAL mode for better concurrent access
 db.pragma('journal_mode = WAL');

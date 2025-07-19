@@ -1,7 +1,10 @@
 import { json } from '@sveltejs/kit';
 import { getSensorReadings, getSensorReadingsForRange } from '$lib/server/database.js';
+import { requireAuth } from '$lib/server/auth';
 
-export function GET({ url }) {
+export async function GET({ url, request }) {
+	await requireAuth(request.headers);
+
 	const hoursBack = url.searchParams.get('hours') ? parseInt(url.searchParams.get('hours')!) : 24;
 	const startTime = url.searchParams.get('start');
 	const endTime = url.searchParams.get('end');

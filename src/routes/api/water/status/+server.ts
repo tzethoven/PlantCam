@@ -1,8 +1,11 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { getWateringStatus } from '$lib/server/relayControl';
+import { requireAuth } from '$lib/server/auth';
 
-export const GET: RequestHandler = async () => {
+export const GET: RequestHandler = async ({ request }) => {
 	try {
+		await requireAuth(request.headers);
+
 		const isWatering = getWateringStatus();
 
 		return new Response(

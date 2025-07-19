@@ -1,7 +1,10 @@
 import { json } from '@sveltejs/kit';
 import { getWateringEvents, getWateringEventsForRange } from '$lib/server/database.js';
+import { requireAuth } from '$lib/server/auth';
 
-export function GET({ url }) {
+export async function GET({ url, request }) {
+	await requireAuth(request.headers);
+
 	const limit = url.searchParams.get('limit') ? parseInt(url.searchParams.get('limit')!) : 50;
 	const startTime = url.searchParams.get('start');
 	const endTime = url.searchParams.get('end');
