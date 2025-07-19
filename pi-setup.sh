@@ -7,4 +7,4 @@ npm install
 echo "Running npm build..."
 npm run build
 
-echo "Setup complete. You can now run start.sh."
+echo "Setup complete."
