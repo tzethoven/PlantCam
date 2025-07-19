@@ -96,7 +96,7 @@ const insertWateringEvent = db.prepare(`
 const getRecentSensorReadings = db.prepare(`
 	SELECT * FROM sensor_readings 
 	WHERE timestamp > ? 
-	ORDER BY timestamp DESC 
+	ORDER BY timestamp ASC
 	LIMIT ?
 `);
 
@@ -108,14 +108,14 @@ const getSensorReadingsByDateRange = db.prepare(`
 
 const getRecentWateringEvents = db.prepare(`
 	SELECT * FROM watering_events 
-	ORDER BY timestamp DESC 
+	ORDER BY timestamp ASC
 	LIMIT ?
 `);
 
 const getWateringEventsByDateRange = db.prepare(`
 	SELECT * FROM watering_events 
 	WHERE timestamp BETWEEN ? AND ?
-	ORDER BY timestamp DESC
+	ORDER BY timestamp ASC
 `);
 
 // Export functions for use in other modules
