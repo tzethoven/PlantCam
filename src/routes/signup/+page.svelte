@@ -53,12 +53,13 @@
 			if (result.error) {
 				error = result.error.message || 'Signup failed';
 			} else {
-				success = 'Account created successfully! Please check your email to verify your account.';
+				success = 'Account created successfully!';
 				// Clear form
 				name = '';
 				email = '';
 				password = '';
 				confirmPassword = '';
+				goto('/');
 			}
 		} catch (err) {
 			error = 'An unexpected error occurred';
