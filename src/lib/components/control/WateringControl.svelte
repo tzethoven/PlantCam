@@ -1385,12 +1385,6 @@
 		.toggle-input:checked + .toggle-slider .toggle-thumb {
 			transform: translateX(1.5rem) !important;
 		}
-
-		/* Maintain visual feedback without motion */
-		.section-badge:hover {
-			background: rgba(255, 255, 255, 0.3) !important;
-			transform: none !important;
-		}
 	}
 
 	/* Loading Skeleton Styles */

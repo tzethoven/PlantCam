@@ -762,10 +762,6 @@
 
 	/* Reduced motion support */
 	@media (prefers-reduced-motion: reduce) {
-		.soil-humidity-chart-container.low-moisture {
-			animation: none;
-		}
-
 		.moisture-status.critical {
 			animation: none;
 		}

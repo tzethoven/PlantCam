@@ -1,4 +1,4 @@
-import { Chip, Line, getChipNames } from 'node-libgpiod';
+import { Chip, type Line, getChipNames } from 'node-libgpiod';
 import { storeWateringEvent } from './database.js';
 
 // GPIO pin for relay control (BCM numbering)

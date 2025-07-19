@@ -38,7 +38,7 @@
 	{#if prefersReducedMotion}
 		<!-- Static nature elements for reduced motion -->
 		{#if enableSunlight}
-			<div class="static-sunlight" />
+			<div class="static-sunlight"></div>
 		{/if}
 		{#if enableLeaves}
 			<div class="static-leaves">
@@ -58,7 +58,7 @@
 		{#if enableDewdrops}
 			<div class="static-dewdrops">
 				{#each Array.from({ length: Math.min(dropCount, 4) }, (_, i) => i) as i (i)}
-					<div class="static-dewdrop static-dewdrop-{i + 1}" />
+					<div class="static-dewdrop static-dewdrop-{i + 1}"></div>
 				{/each}
 			</div>
 		{/if}
