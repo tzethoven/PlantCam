@@ -1,13 +1,8 @@
 import Database from 'better-sqlite3';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-
-// Get the directory where this file is located
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { join } from 'path';
 
 // Database file path - will be created in the project root
-const dbPath = join(__dirname, '../../../plantcam.db');
+const dbPath = join(process.cwd(), 'plantcam.db');
 
 // Initialize database
 const db = new Database(dbPath);
