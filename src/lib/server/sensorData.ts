@@ -1,5 +1,6 @@
 import dht from 'node-dht-sensor';
 import mockSensorData from './data/mockSensorData.json';
+import { storeSensorReading, getSensorReadings } from './database.js';
 
 if (process.env.NODE_ENV === 'development') {
 	dht.initialize({ test: { fake: { temperature: 20, humidity: 40 } } });
@@ -17,8 +18,13 @@ function pollSensor() {
 		temperature: result.temperature,
 		humidity: result.humidity
 	};
+
+	// Store in memory for backward compatibility
 	readings.push(reading);
 	if (readings.length > windowSize) readings.shift();
+
+	// Store in database
+	storeSensorReading(reading.timestamp, reading.temperature, reading.humidity);
 }
 
 // Only start polling if not building
@@ -32,6 +38,12 @@ export function getReadings() {
 	if (process.env.NODE_ENV === 'development') {
 		return mockSensorData;
 	} else {
-		return readings;
+		// Return data from database instead of memory
+		const dbReadings = getSensorReadings(24); // Last 24 hours
+		return dbReadings.map((row) => ({
+			timestamp: row.timestamp,
+			temperature: row.temperature,
+			humidity: row.humidity
+		}));
 	}
 }

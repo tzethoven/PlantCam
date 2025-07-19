@@ -30,6 +30,7 @@
 		"@tailwindcss/vite": "^4.0.0",
 		"@testing-library/jest-dom": "^6.6.3",
 		"@testing-library/svelte": "^5.2.8",
+		"@types/better-sqlite3": "^7.6.13",
 		"@types/node": "^24.0.13",
 		"@types/node-dht-sensor": "^0.4.2",
 		"@vitest/browser": "^3.2.3",
@@ -54,6 +55,7 @@
 		"vitest-browser-svelte": "^0.1.0"
 	},
 	"dependencies": {
+		"better-sqlite3": "^12.2.0",
 		"chart.js": "^4.5.0",
 		"node-dht-sensor": "^0.4.5",
 		"node-libgpiod": "^0.5.3"

@@ -1,38 +1,160 @@
-# sv
+# PlantCam2
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A smart plant monitoring system built with SvelteKit, designed to run on Raspberry Pi. Monitor temperature, humidity, and control automated watering with a beautiful web interface.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- 🌡️ **Real-time sensor monitoring** - Temperature and humidity tracking
+- 💧 **Automated watering control** - Manual and scheduled watering
+- 📊 **Data visualization** - Charts and statistics for sensor data
+- 📱 **Responsive web interface** - Works on desktop and mobile
+- 🗄️ **SQLite database** - Persistent storage for sensor readings and watering events
+- 📷 **Camera feed** - Live video stream from Raspberry Pi camera
+
+## Hardware Requirements
+
+- Raspberry Pi (3 or 4 recommended)
+- DHT11/DHT22 temperature/humidity sensor
+- Relay module for water pump control
+- Water pump and tubing
+- Optional: Raspberry Pi camera module
+
+## Software Setup
+
+### Prerequisites
+
+1. **Install SQLite on Raspberry Pi:**
+
+   ```bash
+   sudo apt update
+   sudo apt install sqlite3
+   ```
+
+2. **Clone and install dependencies:**
+   ```bash
+   git clone <your-repo-url>
+   cd plantcam2
+   npm install
+   ```
+
+### Database Setup
+
+The application uses SQLite for data storage. The database will be automatically created when you first run the application.
+
+- **Database file:** `plantcam.db` (created in project root)
+- **Tables:**
+  - `sensor_readings` - Temperature and humidity data
+  - `watering_events` - Watering activity logs
+  - `watering_schedules` - Automated watering schedules
+
+### Backup Database
+
+Use the included backup script to protect your data:
 
 ```bash
-# create a new project in the current directory
-npx sv create
+# Manual backup
+./backup-db.sh
 
-# create a new project in my-app
-npx sv create my-app
+# Set up automatic daily backups (add to crontab)
+crontab -e
+# Add this line:
+0 2 * * * /path/to/plantcam2/backup-db.sh
 ```
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Development
 
 ```bash
+# Start development server
 npm run dev
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
+# Build for production
 npm run build
+
+# Start production server
+npm run start
 ```
 
-You can preview the production build with `npm run preview`.
+## API Endpoints
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+### Sensor Data
+
+- `GET /api/sensors/data` - Current sensor readings
+- `GET /api/sensors/history?hours=24` - Historical sensor data
+- `GET /api/sensors/history?start=1234567890&end=1234567899` - Date range data
+
+### Watering Control
+
+- `GET /api/water/status` - Current watering status
+- `POST /api/water/toggle` - Toggle watering on/off
+- `GET /api/water/history` - Watering event history
+
+## Deployment on Raspberry Pi
+
+1. **Build the application:**
+
+   ```bash
+   npm run build
+   ```
+
+2. **Start the production server:**
+
+   ```bash
+   npm run start
+   ```
+
+3. **Set up auto-start (optional):**
+
+   ```bash
+   # Create systemd service
+   sudo nano /etc/systemd/system/plantcam.service
+   ```
+
+   Add this content:
+
+   ```ini
+   [Unit]
+   Description=PlantCam Service
+   After=network.target
+
+   [Service]
+   Type=simple
+   User=pi
+   WorkingDirectory=/home/pi/plantcam2
+   ExecStart=/usr/bin/node build
+   Restart=always
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+   Enable the service:
+
+   ```bash
+   sudo systemctl enable plantcam
+   sudo systemctl start plantcam
+   ```
+
+## Data Storage
+
+The application stores data locally in SQLite format:
+
+- **Sensor readings:** ~50 bytes per reading
+- **Watering events:** ~30 bytes per event
+- **1 year of data:** ~1-2 MB total
+
+## Troubleshooting
+
+### Database Issues
+
+- Ensure SQLite is installed: `sqlite3 --version`
+- Check database file permissions: `ls -la plantcam.db`
+- Verify database integrity: `sqlite3 plantcam.db "PRAGMA integrity_check;"`
+
+### GPIO Issues
+
+- Ensure user has GPIO permissions: `sudo usermod -a -G gpio pi`
+- Check GPIO pin configuration in `src/lib/server/gpio/water.ts`
+
+## License
+
+MIT License
