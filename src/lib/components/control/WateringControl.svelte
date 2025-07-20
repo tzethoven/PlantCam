@@ -20,7 +20,7 @@
 	let schedule = {
 		enabled: false,
 		frequency: 24, // hours
-		duration: 30 // seconds
+		duration: 10 // seconds
 	};
 
 	// Form validation state
