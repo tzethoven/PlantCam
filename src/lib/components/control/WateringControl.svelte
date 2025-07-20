@@ -11,7 +11,7 @@
 	let isWatering = false;
 	let wateringProgress = 0;
 	let remainingTime = 0;
-	let totalDuration = 30; // seconds
+	let totalDuration = 10; // seconds
 	let progressInterval: NodeJS.Timeout | null = null;
 	let isLoading = false;
 	let isInitialLoading = true; // Add initial loading state
