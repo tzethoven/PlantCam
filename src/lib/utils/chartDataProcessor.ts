@@ -65,7 +65,7 @@ export function downsampleData(
 		});
 	}
 
-	return result;
+	return result.sort((a, b) => a.timestamp - b.timestamp);
 }
 
 /**
@@ -141,7 +141,7 @@ export function smartDownsample(
 		return result.filter((_, index) => index % step === 0);
 	}
 
-	return result;
+	return result.sort((a, b) => a.timestamp - b.timestamp);
 }
 
 /**

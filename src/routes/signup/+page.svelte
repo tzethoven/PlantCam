@@ -3,20 +3,22 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
-	let name = '';
-	let email = '';
-	let password = '';
-	let confirmPassword = '';
-	let isLoading = false;
-	let error = '';
-	let success = '';
-	let mounted = false;
+	let name = $state('');
+	let email = $state('');
+	let password = $state('');
+	let confirmPassword = $state('');
+	let isLoading = $state(false);
+	let error = $state('');
+	let success = $state('');
+	let mounted = $state(false);
 
 	const session = useSession();
 
 	onMount(() => {
 		mounted = true;
+	});
 
+	$effect(() => {
 		// Redirect to dashboard if already authenticated
 		if ($session?.data) {
 			goto('/');
@@ -24,6 +26,11 @@
 	});
 
 	async function handleSignup() {
+		if (name !== 'Tobi Zethoven') {
+			error = 'No new users allowed at the moment';
+			return;
+		}
+
 		if (!name || !email || !password || !confirmPassword) {
 			error = 'Please fill in all fields';
 			return;
@@ -103,7 +110,14 @@
 			</div>
 
 			<!-- Signup Form -->
-			<form class="auth-form" class:loading={isLoading} on:submit|preventDefault={handleSignup}>
+			<form
+				class="auth-form"
+				class:loading={isLoading}
+				onsubmit={(e) => {
+					e.preventDefault();
+					handleSignup();
+				}}
+			>
 				<div class="form-fields">
 					<!-- Name Field -->
 					<div class="form-field">
@@ -112,7 +126,7 @@
 							id="name"
 							type="text"
 							bind:value={name}
-							on:keypress={handleKeyPress}
+							onkeypress={handleKeyPress}
 							required
 							class="form-input glass focus-ring"
 							placeholder="Enter your full name"
@@ -127,7 +141,7 @@
 							id="email"
 							type="email"
 							bind:value={email}
-							on:keypress={handleKeyPress}
+							onkeypress={handleKeyPress}
 							required
 							class="form-input glass focus-ring"
 							placeholder="Enter your email"
@@ -142,7 +156,7 @@
 							id="password"
 							type="password"
 							bind:value={password}
-							on:keypress={handleKeyPress}
+							onkeypress={handleKeyPress}
 							required
 							class="form-input glass focus-ring"
 							placeholder="Enter your password (min 8 characters)"
@@ -159,7 +173,7 @@
 							id="confirmPassword"
 							type="password"
 							bind:value={confirmPassword}
-							on:keypress={handleKeyPress}
+							onkeypress={handleKeyPress}
 							required
 							class="form-input glass focus-ring"
 							placeholder="Confirm your password"
@@ -866,27 +880,6 @@
 		will-change: transform;
 		transform: translateZ(0);
 		backface-visibility: hidden;
-	}
-
-	/* Enhanced form validation feedback */
-	.form-field.has-error .form-input {
-		border-color: rgba(239, 68, 68, 0.6);
-		background: rgba(239, 68, 68, 0.05);
-		animation: fieldErrorShake 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-	}
-
-	.form-field.has-error .form-label {
-		color: #ef4444;
-	}
-
-	.form-field.has-success .form-input {
-		border-color: rgba(34, 197, 94, 0.6);
-		background: rgba(34, 197, 94, 0.05);
-		animation: fieldSuccessPulse 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-	}
-
-	.form-field.has-success .form-label {
-		color: #22c55e;
 	}
 
 	/* Loading state for entire form */
@@ -1700,16 +1693,6 @@
 			animation: none !important;
 			opacity: 0.2;
 		}
-
-		/* Disable form feedback animations */
-		.form-field.has-error .form-input {
-			animation: none !important;
-		}
-
-		.form-field.has-success .form-input {
-			animation: none !important;
-		}
-
 		.form-input:disabled::after {
 			animation: none !important;
 			opacity: 0.1;

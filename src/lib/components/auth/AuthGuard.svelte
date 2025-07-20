@@ -8,6 +8,7 @@
 	const session = useSession();
 
 	$effect(() => {
+		console.log('AuthGuard effect', $session?.data);
 		if ($session?.data === null) {
 			goto(redirectTo);
 		}
