@@ -4,6 +4,7 @@
 	import { showError, triggerHapticFeedback } from '$lib/utils/notifications';
 	import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
 	import { smartDownsample, getOptimalTargetPoints } from '$lib/utils/chartDataProcessor';
+	import { getResponsiveConfig } from '$lib/utils/chartConfig';
 
 	let canvas: HTMLCanvasElement;
 	let chart: Chart;
@@ -140,27 +141,6 @@
 			// Smooth earth-like animation update
 			chart.update('active');
 		}
-	}
-
-	function getResponsiveConfig() {
-		const isMobile = window.innerWidth <= 480;
-		const isTablet = window.innerWidth <= 768 && window.innerWidth > 480;
-		const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-		return {
-			pointRadius: isMobile ? 3 : 4,
-			pointHoverRadius: isMobile ? 5 : 7,
-			borderWidth: isMobile ? 2 : 3,
-			legendFontSize: isMobile ? 10 : isTablet ? 11 : 12,
-			legendPadding: isMobile ? 12 : isTablet ? 16 : 20,
-			tooltipFontSize: isMobile ? 12 : 14,
-			tooltipBodySize: isMobile ? 11 : 13,
-			tooltipPadding: isMobile ? 8 : 12,
-			axisTitleSize: isMobile ? 10 : isTablet ? 11 : 12,
-			axisTickSize: isMobile ? 9 : isTablet ? 10 : 11,
-			animationDuration: isMobile ? 800 : 1200,
-			animationEasing: (prefersReducedMotion ? 'linear' : 'easeInOutCubic') as EasingFunction
-		};
 	}
 
 	function handleRetryClick() {

@@ -5,6 +5,7 @@
 	import { showError, triggerHapticFeedback } from '$lib/utils/notifications';
 	import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
 	import { smartDownsample, getOptimalTargetPoints } from '$lib/utils/chartDataProcessor';
+	import { getResponsiveConfig } from '$lib/utils/chartConfig';
 
 	let data: SensorReading[] = [];
 	let canvas: HTMLCanvasElement;
@@ -112,27 +113,6 @@
 			// Smooth flowing animation update
 			chart.update('active');
 		}
-	}
-
-	function getResponsiveConfig() {
-		const isMobile = window.innerWidth <= 480;
-		const isTablet = window.innerWidth <= 768 && window.innerWidth > 480;
-		const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-		return {
-			pointRadius: isMobile ? 3 : 5,
-			pointHoverRadius: isMobile ? 6 : 8,
-			borderWidth: isMobile ? 2 : 3,
-			legendFontSize: isMobile ? 10 : isTablet ? 11 : 12,
-			legendPadding: isMobile ? 12 : isTablet ? 16 : 20,
-			tooltipFontSize: isMobile ? 12 : 14,
-			tooltipBodySize: isMobile ? 11 : 13,
-			tooltipPadding: isMobile ? 8 : 12,
-			axisTitleSize: isMobile ? 10 : isTablet ? 11 : 12,
-			axisTickSize: isMobile ? 9 : isTablet ? 10 : 11,
-			animationDuration: prefersReducedMotion ? 0 : isMobile ? 800 : 1500,
-			animationEasing: (prefersReducedMotion ? 'linear' : 'easeInOutSine') as EasingFunction
-		};
 	}
 
 	function handleRetryClick() {
