@@ -60,6 +60,9 @@
 <NotificationContainer position="top-right" />
 
 <style>
+	:global(body) {
+		margin: 0;
+	}
 	.app-container {
 		position: relative;
 		z-index: 10;

@@ -410,7 +410,7 @@
 					</div>
 
 					<!-- Schedule Preview -->
-					<div class="schedule-preview">
+					<!-- <div class="schedule-preview">
 						<div class="preview-header">
 							<span class="preview-title">Schedule Preview</span>
 						</div>
@@ -419,13 +419,11 @@
 								<div class="timeline-dot"></div>
 								<div class="timeline-content">
 									<span class="timeline-label">Next watering</span>
-									<span class="timeline-time"
-										>Every {schedule.frequency}h for {schedule.duration}s</span
-									>
+									<span class="timeline-time">{nextWateringTime}</span>
 								</div>
 							</div>
 						</div>
-					</div>
+					</div> -->
 				</div>
 			{/if}
 		</div>
@@ -828,7 +826,7 @@
 	}
 
 	/* Schedule Preview */
-	.schedule-preview {
+	/*.schedule-preview {
 		background: rgba(255, 255, 255, 0.1);
 		border: 1px solid rgba(255, 255, 255, 0.2);
 		border-radius: 0.75rem;
@@ -882,7 +880,7 @@
 	.timeline-time {
 		font-size: 0.75rem;
 		color: #6b7280;
-	}
+	} */
 
 	/* Animations */
 	@keyframes pulse-active {
@@ -1188,7 +1186,7 @@
 			font-size: 0.8125rem;
 		}
 
-		.schedule-preview {
+		/*.schedule-preview {
 			padding: 0.875rem;
 		}
 
@@ -1202,7 +1200,7 @@
 
 		.timeline-time {
 			font-size: 0.6875rem;
-		}
+		} */
 
 		/* Disable hover effects on mobile */
 		.watering-button:hover {
@@ -1292,9 +1290,9 @@
 			font-size: 0.8125rem;
 		}
 
-		.schedule-preview {
+		/* .schedule-preview {
 			padding: 0.75rem;
-		}
+		} */
 	}
 
 	/* Comprehensive Reduced Motion Support */
@@ -1340,10 +1338,10 @@
 			opacity: 0 !important;
 		}
 
-		.timeline-dot {
+		/* .timeline-dot {
 			animation: none !important;
 			opacity: 1 !important;
-		}
+		} */
 
 		.water-drop.filling {
 			animation: none !important;

@@ -198,25 +198,6 @@
 					></div>
 				</div>
 			{/if}
-
-			<!-- Success Animation Overlay -->
-			{#if type === 'success'}
-				<div class="success-animation">
-					<div class="success-checkmark">
-						<div class="check-icon">
-							<span class="check-left"></span>
-							<span class="check-right"></span>
-						</div>
-					</div>
-				</div>
-			{/if}
-
-			<!-- Error Animation Overlay -->
-			{#if type === 'error'}
-				<div class="error-animation">
-					<div class="error-shake"></div>
-				</div>
-			{/if}
 		</div>
 	</div>
 {/if}
