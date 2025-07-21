@@ -6,9 +6,9 @@ export function getResponsiveConfig() {
 	const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 	return {
-		pointRadius: isMobile ? 2 : 3,
-		pointHoverRadius: isMobile ? 5 : 6,
-		borderWidth: isMobile ? 2 : 2,
+		pointRadius: isMobile ? 1 : 2,
+		pointHoverRadius: isMobile ? 2 : 3,
+		borderWidth: isMobile ? 1 : 2,
 		legendFontSize: isMobile ? 10 : isTablet ? 11 : 12,
 		legendPadding: isMobile ? 12 : isTablet ? 16 : 20,
 		tooltipFontSize: isMobile ? 12 : 14,
