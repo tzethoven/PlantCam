@@ -7,8 +7,8 @@ export function getResponsiveConfig() {
 
 	return {
 		pointRadius: isMobile ? 1 : 2,
-		pointHoverRadius: isMobile ? 2 : 3,
-		borderWidth: isMobile ? 1 : 2,
+		pointHoverRadius: isMobile ? 3 : 4,
+		borderWidth: isMobile ? 1 : 1,
 		legendFontSize: isMobile ? 10 : isTablet ? 11 : 12,
 		legendPadding: isMobile ? 12 : isTablet ? 16 : 20,
 		tooltipFontSize: isMobile ? 12 : 14,
