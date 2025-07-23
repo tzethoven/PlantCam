@@ -38,14 +38,18 @@ const hapticPatterns = {
 function playTone(frequency: number, duration: number, type: OscillatorType = 'sine') {
 	if (typeof window === 'undefined' || !window.AudioContext) return;
 
+	let audioContext: AudioContext | null = null;
+	let oscillator: OscillatorNode | null = null;
+	let gainNode: GainNode | null = null;
+
 	try {
 		// Use AudioContext with fallback for webkit
 		const AudioContextClass =
 			window.AudioContext ||
 			(window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-		const audioContext = new AudioContextClass();
-		const oscillator = audioContext.createOscillator();
-		const gainNode = audioContext.createGain();
+		audioContext = new AudioContextClass();
+		oscillator = audioContext.createOscillator();
+		gainNode = audioContext.createGain();
 
 		oscillator.connect(gainNode);
 		gainNode.connect(audioContext.destination);
@@ -60,6 +64,10 @@ function playTone(frequency: number, duration: number, type: OscillatorType = 's
 		oscillator.stop(audioContext.currentTime + duration / 1000);
 	} catch (error) {
 		console.warn('Audio playback failed:', error);
+	} finally {
+		if (oscillator) oscillator.disconnect();
+		if (gainNode) gainNode.disconnect();
+		if (audioContext) audioContext.close();
 	}
 }
 
