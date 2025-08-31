@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { getSensorReadings, getSensorReadingsForRange } from '$lib/server/database.js';
+import { getDHTSensorReadings, getDHTSensorReadingsForRange } from '$lib/server/database.js';
 import { requireAuth } from '$lib/server/auth';
 
 export async function GET({ url, request }) {
@@ -14,10 +14,10 @@ export async function GET({ url, request }) {
 
 		if (startTime && endTime) {
 			// Get data for specific date range
-			data = getSensorReadingsForRange(parseInt(startTime), parseInt(endTime));
+			data = getDHTSensorReadingsForRange(parseInt(startTime), parseInt(endTime));
 		} else {
 			// Get recent data
-			data = getSensorReadings(hoursBack);
+			data = getDHTSensorReadings(hoursBack);
 		}
 
 		return json({
