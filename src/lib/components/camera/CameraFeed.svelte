@@ -9,6 +9,7 @@
 	let showControls = false;
 	let isCapturing = false;
 	let isFullscreen = false;
+	let websocket: WebSocket;
 
 	// Camera control functions
 	function takeSnapshot() {
@@ -67,31 +68,31 @@
 		}, 2000);
 
 		// Initialize WebSocket connection for camera stream
-		// websocket = new WebSocket(`wss://${window.location.host}/api/camera/stream`);
-		// websocket.onopen = () => {
-		// 	isLoading = false;
-		// 	isConnected = true;
-		// 	streamError = false;
-		// };
-		// websocket.onmessage = async (event) => {
-		// 	// Handle incoming video stream data
-		// 	const blob = new Blob([event.data], { type: 'image/jpeg' });
-		// 	const imageUrl = URL.createObjectURL(blob);
-		// 	if (videoElement) {
-		// 		videoElement.src = imageUrl;
-		// 	}
-		// };
-		// websocket.onerror = () => {
-		// 	isLoading = false;
-		// 	isConnected = false;
-		// 	streamError = true;
-		// };
+		websocket = new WebSocket(`wss://${window.location.host}/api/camera/stream`);
+		websocket.onopen = () => {
+			isLoading = false;
+			isConnected = true;
+			streamError = false;
+		};
+		websocket.onmessage = async (event) => {
+			// Handle incoming video stream data
+			const blob = new Blob([event.data], { type: 'image/jpeg' });
+			const imageUrl = URL.createObjectURL(blob);
+			if (videoElement) {
+				videoElement.src = imageUrl;
+			}
+		};
+		websocket.onerror = () => {
+			isLoading = false;
+			isConnected = false;
+			streamError = true;
+		};
 	});
 
 	onDestroy(() => {
-		// if (websocket) {
-		// 	websocket.close();
-		// }
+		if (websocket) {
+			websocket.close();
+		}
 	});
 </script>
 

@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import Chart, { type EasingFunction } from 'chart.js/auto';
-	import type { SensorReading } from '$lib/server/sensorData';
+	import Chart from 'chart.js/auto';
+	import type { DHTSensorReading } from '$lib/server/sensorData';
 	import { showError, triggerHapticFeedback } from '$lib/utils/notifications';
 	import LoadingSkeleton from '$lib/components/ui/LoadingSkeleton.svelte';
 	import { smartDownsample, getOptimalTargetPoints } from '$lib/utils/chartDataProcessor';
 	import { getResponsiveConfig } from '$lib/utils/chartConfig';
 
-	let data: SensorReading[] = [];
+	let data: DHTSensorReading[] = [];
 	let canvas: HTMLCanvasElement;
 	let chart: Chart;
 	let isLoading = true;

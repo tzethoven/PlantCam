@@ -11,12 +11,19 @@ export const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 
 // Type definitions
-export interface SensorReadingRow {
+export interface DHTSensorReadingRow {
 	id: number;
 	timestamp: number;
 	temperature: number;
 	humidity: number;
 	soil_humidity: number | null;
+	created_at: string;
+}
+
+export interface SoilMoistureReadingRow {
+	id: number;
+	timestamp: number;
+	soil_moisture: number;
 	created_at: string;
 }
 
@@ -83,7 +90,7 @@ function initializeDatabase() {
 initializeDatabase();
 
 // Prepare statements for better performance
-const insertSensorReading = db.prepare(`
+const insertDHTSensorReading = db.prepare(`
 	INSERT INTO sensor_readings (timestamp, temperature, humidity, soil_humidity)
 	VALUES (?, ?, ?, ?)
 `);
@@ -93,14 +100,14 @@ const insertWateringEvent = db.prepare(`
 	VALUES (?, ?, ?)
 `);
 
-const getRecentSensorReadings = db.prepare(`
+const getRecentDHTSensorReadings = db.prepare(`
 	SELECT * FROM sensor_readings 
 	WHERE timestamp > ? 
 	ORDER BY timestamp ASC
 	LIMIT ?
 `);
 
-const getSensorReadingsByDateRange = db.prepare(`
+const getDHTSensorReadingsByDateRange = db.prepare(`
 	SELECT * FROM sensor_readings 
 	WHERE timestamp BETWEEN ? AND ?
 	ORDER BY timestamp ASC
@@ -119,14 +126,14 @@ const getWateringEventsByDateRange = db.prepare(`
 `);
 
 // Export functions for use in other modules
-export function storeSensorReading(
+export function storeDHTSensorReading(
 	timestamp: number,
 	temperature: number,
 	humidity: number,
 	soilHumidity?: number
 ) {
 	try {
-		insertSensorReading.run(timestamp, temperature, humidity, soilHumidity || null);
+		insertDHTSensorReading.run(timestamp, temperature, humidity, soilHumidity || null);
 		return true;
 	} catch (error) {
 		console.error('Error storing sensor reading:', error);
@@ -148,13 +155,16 @@ export function storeWateringEvent(
 	}
 }
 
-export function getSensorReadings(hoursBack: number = 24): SensorReadingRow[] {
+export function getDHTSensorReadings(hoursBack: number = 24): DHTSensorReadingRow[] {
 	const cutoffTime = Date.now() - hoursBack * 60 * 60 * 1000;
-	return getRecentSensorReadings.all(cutoffTime, 1000) as SensorReadingRow[];
+	return getRecentDHTSensorReadings.all(cutoffTime, 1000) as DHTSensorReadingRow[];
 }
 
-export function getSensorReadingsForRange(startTime: number, endTime: number): SensorReadingRow[] {
-	return getSensorReadingsByDateRange.all(startTime, endTime) as SensorReadingRow[];
+export function getDHTSensorReadingsForRange(
+	startTime: number,
+	endTime: number
+): DHTSensorReadingRow[] {
+	return getDHTSensorReadingsByDateRange.all(startTime, endTime) as DHTSensorReadingRow[];
 }
 
 export function getWateringEvents(limit: number = 50): WateringEventRow[] {

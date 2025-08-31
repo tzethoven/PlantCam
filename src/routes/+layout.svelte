@@ -10,7 +10,7 @@
 	let { children } = $props();
 
 	// Define public routes that don't require authentication
-	const publicRoutes = ['/login', '/signup'];
+	const publicRoutes = ['/login', '/signup', '/two-factor/verify'];
 
 	// Background configuration based on route
 	let showBackground = true;
